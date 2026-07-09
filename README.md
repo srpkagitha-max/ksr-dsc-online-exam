@@ -1,16 +1,12 @@
-# KSR DSC Enterprise V5.0 - Phase 2
+KSR DSC Enterprise V5.0 - Phase 2.1
 
-Includes Phase 1 plus:
-- Question Editor
-- Bulk 200+ questions paste parser
-- Preview/Edit/Add/Delete/Reorder
-- Save questions to Firebase
-- Student exam basic flow
-- Result print/PDF
+New:
+- Smart Telugu parser for 159+ mixed bits
+- Statement line breaks preserved
+- Matching/list formatting preserved
+- Student exam preview before save
+- Subject-wise grouping
+- Student-wise shuffle within each subject
+- Firebase save still compatible with Phase 2
 
-After upload:
-1. Login as admin.
-2. Create institute and exam.
-3. Open Question Editor.
-4. Paste questions and save.
-5. Student page shows active exams.
+Upload all files to GitHub and open questions.html?v=21
