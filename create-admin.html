@@ -1,0 +1,7 @@
+<!doctype html><html lang="te"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Create Admin</title><link rel="stylesheet" href="style.css"><script src="firebase-config.js"></script></head><body>
+<header class="top"><h1>KSR Create Admin</h1><p>First admin account</p><div class="nav"><a href="login.html">Login</a></div></header>
+<main class="wrap"><section class="card"><h2>Create First Admin</h2><div id="msg" style="display:none"></div><label>Email</label><input id="email" type="email" placeholder="admin@gmail.com"><label>Password</label><input id="pass" type="password" placeholder="minimum 6 characters"><label>Name</label><input id="name" value="KSR Admin"><button class="btn green" id="create" type="button">Create Admin</button><div class="hint">ఒక్కసారి admin create అయిన తర్వాత login.html లో login చేయండి.</div></section></main>
+<script type="module">
+import {ready,auth,db,F,el,show} from './app.js';
+el('create').onclick=async()=>{try{if(!ready){show('msg','Firebase config ready కాలేదు. setup.html open చేయండి.','err');return} const email=el('email').value.trim(); const pass=el('pass').value; const name=el('name').value.trim()||'KSR Admin'; const c=await F.createUserWithEmailAndPassword(auth,email,pass); await F.setDoc(F.doc(db,'users',c.user.uid),{email,name,role:'superAdmin',active:true,createdAt:F.serverTimestamp()}); show('msg','Admin created ✅ ఇప్పుడు login.html లో login చేయండి.','ok')}catch(e){show('msg',e.message,'err')}};
+</script></body></html>

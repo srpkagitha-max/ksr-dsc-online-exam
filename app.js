@@ -1,21 +1,36 @@
-import { firebaseConfig } from './firebase-config.js';
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const $ = id => document.getElementById(id);
-export function toast(text,type='msg'){ const box=$('message'); if(box){box.className='msg '+type; box.textContent=text; box.classList.remove('hidden');} else alert(text); }
-export function safeCode(v){ return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,''); }
-export async function currentUserDoc(){ if(!auth.currentUser) return null; const snap=await getDoc(doc(db,'users',auth.currentUser.uid)); return snap.exists()?{id:snap.id,...snap.data()}:null; }
-export async function requireLogin(){ return new Promise(resolve=>onAuthStateChanged(auth,async u=>{ if(!u){ location.href='login.html'; return; } resolve(await currentUserDoc()); })); }
-export async function login(email,password){ await signInWithEmailAndPassword(auth,email,password); }
-export async function logout(){ await signOut(auth); location.href='login.html'; }
-export async function createInstitute(code,name){ code=safeCode(code); if(!code||!name) throw new Error('Institute code/name required'); await setDoc(doc(db,'institutes',code),{code,name,active:true,public:true,createdAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true}); return code; }
-export async function createAdmin(email,password,name,instituteCode,role='instituteAdmin'){ const cred=await createUserWithEmailAndPassword(auth,email,password); await setDoc(doc(db,'users',cred.user.uid),{email,name,role,instituteCode:safeCode(instituteCode),active:true,createdAt:serverTimestamp()}); return cred.user.uid; }
-export async function createExam(instituteCode,data){ instituteCode=safeCode(instituteCode); const examId=(data.title||'EXAM').toUpperCase().replace(/[^A-Z0-9]+/g,'-').slice(0,25)+'-'+Date.now(); await setDoc(doc(db,'institutes',instituteCode,'exams',examId),{id:examId,instituteCode,title:data.title,startTime:data.startTime,endTime:data.endTime,duration:Number(data.duration||150),status:data.status||'draft',totalQuestions:Number(data.totalQuestions||0),createdAt:serverTimestamp(),updatedAt:serverTimestamp()}); return examId; }
-export async function listInstitutes(){ const s=await getDocs(query(collection(db,'institutes'),orderBy('createdAt','desc'))); return s.docs.map(d=>({id:d.id,...d.data()})); }
-export async function listExams(code){ const s=await getDocs(query(collection(db,'institutes',safeCode(code),'exams'),orderBy('createdAt','desc'))); return s.docs.map(d=>({id:d.id,...d.data()})); }
-export async function getInstitute(code){ const s=await getDoc(doc(db,'institutes',safeCode(code))); return s.exists()?{id:s.id,...s.data()}:null; }
+export function getSavedConfig(){
+  try{
+    const saved = localStorage.getItem('ksrFirebaseConfig');
+    if(saved){
+      const parsed = JSON.parse(saved);
+      if(configOk(parsed)) return parsed;
+    }
+  }catch(e){}
+  return window.KSR_FIREBASE_CONFIG || null;
+}
+export function configOk(cfg){
+  return !!(cfg && cfg.apiKey && cfg.authDomain && cfg.projectId && cfg.messagingSenderId && cfg.appId && !String(cfg.apiKey).includes('PASTE') && !String(cfg.appId).includes('PASTE'));
+}
+export const cfg = getSavedConfig();
+export const ready = configOk(cfg);
+let appInstance = null;
+try { appInstance = ready ? initializeApp(cfg) : null; } catch(e) { appInstance = null; }
+export const app = appInstance;
+export const auth = app ? getAuth(app) : null;
+export const db = app ? getFirestore(app) : null;
+export const F = {signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut,onAuthStateChanged,collection,doc,setDoc,getDoc,getDocs,addDoc,query,where,orderBy,serverTimestamp};
+export function el(id){return document.getElementById(id)}
+export function show(id,msg,type='ok'){const x=el(id); if(x){x.className=type; x.innerHTML=msg; x.style.display='block'}}
+export function hide(id){const x=el(id); if(x)x.style.display='none'}
+export function cleanCode(s){return (s||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'')}
+export function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+export async function requireLogin(){
+ return new Promise(resolve=>{
+  if(!ready || !auth){resolve(null);return}
+  F.onAuthStateChanged(auth,u=>resolve(u||null));
+ })
+}
