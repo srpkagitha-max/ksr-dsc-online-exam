@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /institutes/{id} {
+      allow read: if true;
+      allow write: if true; // L2 demo. Final lo admin auth add cheyyali.
+    }
+    match /exams/{id} {
+      allow read: if true;
+      allow write: if true; // L2 demo. Final lo admin auth add cheyyali.
+    }
+    match /results/{id} {
+      allow read, create: if true;
+      allow update, delete: if false;
+    }
+  }
+}

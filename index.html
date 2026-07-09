@@ -1,10 +1,4 @@
-<!DOCTYPE html><html lang="te"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR DSC Online Exam</title><link rel="stylesheet" href="style.css"></head><body>
-<div class="topbar"><div class="wrap"><div class="brand" id="brand">KSR DSC Online Exam Platform</div><div class="sub">Student Dashboard • Online DSC Exam Style</div><div class="nav"><a href="admin.html">Admin Login</a></div></div></div>
-<div class="wrap"><div class="card"><h2>Student Details</h2><div class="grid"><div><label>Student Name</label><input id="sname" placeholder="మీ పేరు"></div><div><label>Hall Ticket / Mobile</label><input id="hall" placeholder="Hall ticket number"></div></div></div><div class="card"><h2>Available Exams</h2><div id="exams"></div></div></div>
-<script src="parser.js"></script><script>
-function esc(s){return String(s||'').replaceAll('<','&lt;')}
-function status(e){let now=new Date(),st=e.start?new Date(e.start):null,en=e.end?new Date(e.end):null;if(!e.active)return'Inactive';if(st&&now<st)return'Starts: '+st.toLocaleString();if(en&&now>en)return'Closed';return'Open'}
-function render(){let exams=getExams();let active=exams.filter(e=>e.active);exams.innerHTML='';document.getElementById('exams').innerHTML=active.map(e=>`<div class="qbox"><h3>${esc(e.title)}</h3><p><b>Institute:</b> ${esc(e.institute)}</p><p><span class="pill">${e.questions.length} Questions</span><span class="pill">${e.duration} Minutes</span><span class="pill">${status(e)}</span></p><button class="btn green" onclick="startExam('${e.id}')">Start Exam</button></div>`).join('')||'<div class="notice danger">Admin ఇంకా exam create చేయలేదు.</div>'}
-function startExam(id){let n=sname.value.trim(),h=hall.value.trim();if(!n||!h)return alert('Name and Hall Ticket enter cheyyi');sessionStorage.setItem('ksr_student',JSON.stringify({name:n,hall:h,examId:id}));location.href='student.html'}
-render();
-</script></body></html>
+<!doctype html><html lang="te"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR DSC L2 - Student</title><link rel="stylesheet" href="style.css"><script src="firebase-config.js"></script></head><body>
+<header><b>KSR DSC Online Exam L2</b><a href="admin.html">Admin</a></header>
+<main class="card"><h2>Student Login</h2><input id="inst" placeholder="Institute Code e.g. KSR"><input id="name" placeholder="Student Name"><input id="phone" placeholder="Phone / Hall Ticket"><button id="loginBtn">Show Exams</button><p class="notice">Exam start time vachinappudu Start button enable avuthundi.</p><div id="examList"></div></main>
+<script type="module" src="student.js"></script></body></html>
