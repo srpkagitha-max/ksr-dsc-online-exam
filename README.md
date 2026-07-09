@@ -1,40 +1,25 @@
-# KSR DSC Online Exam Platform - L2 Firebase
+# KSR DSC Enterprise V5.0 - Phase 1
 
-## Features
-- Firebase Firestore backend
-- Institute-wise exams
-- Same institute lo multiple exams
-- 1000+ students support ki base architecture
-- Bulk bits paste parser: ● ⚫ * Answer: A support
-- Admin preview editor: edit/add/delete questions
-- Student DSC-style exam screen
-- Timer + auto submit
-- One student one attempt basic block
-- Result / answer sheet print PDF
-- Leaderboard / marks list print PDF
+Phase 1 includes:
+- Firebase config file
+- Admin login foundation
+- Super admin dashboard
+- Institute create/list
+- Institute admin create/list
+- Exam create/list foundation
+- Student login foundation
 
-## Setup
-1. Firebase Console lo new project create cheyyandi.
-2. Build → Firestore Database → Create database.
-3. Project Settings → Your apps → Web app create cheyyandi.
-4. Firebase config copy chesi `firebase-config.js` lo paste cheyyandi.
-5. Firestore Rules tab lo `firestore.rules.txt` content paste chesi Publish cheyyandi.
-6. Files anni GitHub repository root lo upload cheyyandi.
-7. GitHub Pages enable cheyyandi.
+## Upload to GitHub
+Upload all files to repo root and enable GitHub Pages.
 
-## Admin
-Open `admin.html`
-Default PIN: 1234
+## Firebase Setup
+1. Go to Firebase Console
+2. Create project
+3. Add Web App
+4. Copy config into firebase-config.js
+5. Enable Authentication -> Email/Password
+6. Enable Firestore Database
+7. Add Security Rules from firestore.rules
 
-## Student
-Open `index.html`
-Institute Code, Name, Phone/Hall Ticket enter cheyyali.
-
-## Important
-Idi L2 demo/prototype. Real paid/professional 1000+ students exam ki:
-- Firebase Authentication admin login
-- Strong Firestore security rules
-- Cloud Functions score calculation
-- Payment/Blaze plan
-- Load testing
-add cheyyali.
+## Default Super Admin
+After Firebase config, open setup.html once and create super admin.

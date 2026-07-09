@@ -1,11 +1,13 @@
-// KSR DSC L2 Firebase Config
-// Firebase Console → Project Settings → Your apps → Web app config paste cheyyandi.
-// IMPORTANT: apiKey public ga undadam normal. Security Firestore Rules tho protect cheyyali.
-window.KSR_FIREBASE_CONFIG = {
-  apiKey: "PASTE_API_KEY",
-  authDomain: "PASTE_PROJECT.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_PROJECT.appspot.com",
+// KSR DSC Enterprise V5.0 - Firebase Config
+// Step 1: Firebase Console lo project create cheyyi
+// Step 2: Project settings -> Web app -> config copy cheyyi
+// Step 3: Kindha values replace cheyyi
+
+export const firebaseConfig = {
+  apiKey: "PASTE_YOUR_API_KEY",
+  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
+  projectId: "PASTE_YOUR_PROJECT_ID",
+  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
   messagingSenderId: "PASTE_SENDER_ID",
   appId: "PASTE_APP_ID"
 };
