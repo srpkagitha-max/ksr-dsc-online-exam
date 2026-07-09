@@ -1,4 +1,4 @@
-// KSR DSC Enterprise V5.0 Firebase Config - FIXED
+// KSR DSC Enterprise V5.0 Firebase Config
 window.KSR_FIREBASE_CONFIG = {
   apiKey: "AIzaSyAbaBregtEg9J30xVS7jmocWRAjaZmMyqE",
   authDomain: "ksr-dsc-enterprise.firebaseapp.com",

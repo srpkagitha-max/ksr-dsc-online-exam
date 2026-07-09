@@ -1,27 +1,34 @@
-export function parseBits(raw){
-  const text=(raw||'').replace(/\r/g,'').trim();
-  if(!text) return [];
-  const lines=text.split('\n').map(x=>x.trim()).filter(Boolean);
-  const questions=[]; let q=null;
-  const qStart=/^(\d+)[\).\-\s]+(.+)/;
-  const opt=/^([A-Da-d])[\).\-:\s]+(.+)/;
-  function finish(){ if(q && q.text && q.options.length){ if(!q.correct) q.correct='A'; questions.push(q); } }
-  for(const line0 of lines){
-    let line=line0;
-    const qm=line.match(qStart);
-    const om=line.match(opt);
-    if(qm && !om){ finish(); q={text:qm[2].trim(),options:[],correct:''}; continue; }
-    if(!q){ q={text:line,options:[],correct:''}; continue; }
-    if(om){
-      const key=om[1].toUpperCase(); let val=om[2].trim();
-      if(/[●⚫*✅✔]/.test(val)){ q.correct=key; val=val.replace(/[●⚫*✅✔]/g,'').trim(); }
-      const ans=val.match(/answer\s*[:\-]\s*([A-D])/i); if(ans) q.correct=ans[1].toUpperCase();
-      q.options.push({key,text:val}); continue;
-    }
-    const ans=line.match(/^answer\s*[:\-]\s*([A-D])/i); if(ans){ q.correct=ans[1].toUpperCase(); continue; }
-    q.text += ' ' + line;
+export function parseQuestions(raw){
+  raw = (raw||'').replace(/\r/g,'').trim();
+  if(!raw) return [];
+  let lines = raw.split('\n').map(x=>x.trim()).filter(Boolean);
+  let blocks=[]; let cur=[];
+  const qStart=/^(\d+\s*[\).:-]|Q\s*\d+\s*[\).:-]?)/i;
+  for(const line of lines){
+    if(qStart.test(line) && cur.length){blocks.push(cur);cur=[line];} else cur.push(line);
   }
-  finish();
-  return questions.map((x,i)=>({id:'q'+(i+1), text:x.text, options:x.options.slice(0,4), correct:x.correct||'A', marks:1}));
+  if(cur.length) blocks.push(cur);
+  return blocks.map((b,i)=>parseBlock(b,i)).filter(q=>q.question && q.options.some(o=>o.text));
 }
-export function shuffle(arr){return [...arr].sort(()=>Math.random()-.5)}
+function cleanQ(s){return s.replace(/^(\d+\s*[\).:-]|Q\s*\d+\s*[\).:-]?)/i,'').trim()}
+function parseBlock(lines,idx){
+  let q=[]; let opts={A:'',B:'',C:'',D:''}; let ans='';
+  const optRe=/^([A-D])\s*[\).:-]\s*(.*)$/i;
+  for(let line of lines){
+    let ansLine=line.match(/^(Answer|Ans|Correct)\s*[:\-]\s*([A-D])/i);
+    if(ansLine){ans=ansLine[2].toUpperCase(); continue;}
+    let m=line.match(optRe);
+    if(m){
+      let key=m[1].toUpperCase(); let txt=m[2].trim();
+      if(/[●⚫✅✓✔]$/.test(txt) || /\*$/.test(txt)){ ans=key; txt=txt.replace(/[●⚫✅✓✔*]+$/,'').trim(); }
+      opts[key]=txt; continue;
+    }
+    if(/[●⚫✅✓✔]$/.test(line) || /\*$/.test(line)){
+      // option without A/B/C/D, ignore as question text fallback
+      line=line.replace(/[●⚫✅✓✔*]+$/,'').trim();
+    }
+    q.push(line);
+  }
+  return { id:'q'+Date.now()+idx, question:cleanQ(q.join(' ')), options:['A','B','C','D'].map(k=>({key:k,text:opts[k]})), answer:ans||'A', marks:1 };
+}
+export function blankQuestion(){return {id:'q'+Date.now(),question:'',options:[{key:'A',text:''},{key:'B',text:''},{key:'C',text:''},{key:'D',text:''}],answer:'A',marks:1}}

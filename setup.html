@@ -1,17 +1,1 @@
-<!doctype html><html lang="te"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Setup</title><link rel="stylesheet" href="style.css"><script src="firebase-config.js"></script></head><body>
-<header class="top"><h1>KSR DSC Enterprise Setup</h1><p>Firebase config check page</p><div class="nav"><a href="index.html">Student</a><a href="login.html">Login</a></div></header>
-<main class="wrap"><section class="card"><h2>Firebase Config</h2><div class="hint">ఈ ZIP లో config already set చేసి ఇచ్చాను. Save Config నొక్కితే localStorage లో save అవుతుంది.</div><div id="msg" style="display:none"></div><label>apiKey</label><input id="apiKey"><label>authDomain</label><input id="authDomain"><label>projectId</label><input id="projectId"><label>storageBucket</label><input id="storageBucket"><label>messagingSenderId</label><input id="messagingSenderId"><label>appId</label><input id="appId"><label>measurementId optional</label><input id="measurementId"><div class="toolbar"><button class="btn" id="save" type="button">Save Config</button><button class="btn gray" id="load" type="button">Load Current</button><button class="btn green" id="clear" type="button">Clear Old Config</button></div></section><section class="card"><h2>Next</h2><p>1. Authentication Email/Password enable అయింది.</p><p>2. Firestore create అయింది.</p><p>3. ఇప్పుడు <b>login.html</b> open చేయండి.</p><p class="hint">Login ముందు Firebase Authentication → Users → Add user లో admin email/password create చేయాలి.</p></section></main>
-<script>
-function el(id){return document.getElementById(id)}
-function show(msg,ok=true){var x=el('msg'); x.className=ok?'ok':'err'; x.innerHTML=msg; x.style.display='block'}
-function valid(c){return c && c.apiKey && c.authDomain && c.projectId && c.messagingSenderId && c.appId && !c.apiKey.includes('PASTE')}
-function current(){try{var s=localStorage.getItem('ksrFirebaseConfig'); if(s){var p=JSON.parse(s); if(valid(p)) return p;}}catch(e){} return window.KSR_FIREBASE_CONFIG||{};}
-function fill(c){['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId','measurementId'].forEach(function(k){el(k).value=(c&&c[k])?c[k]:''})}
-function collect(){var c={}; ['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId','measurementId'].forEach(function(k){c[k]=el(k).value.trim()}); return c;}
-window.addEventListener('load',function(){
- fill(current());
- el('load').addEventListener('click',function(){fill(current()); show('Current config loaded ✅',true)});
- el('clear').addEventListener('click',function(){localStorage.removeItem('ksrFirebaseConfig'); fill(window.KSR_FIREBASE_CONFIG||{}); show('Old config cleared ✅',true)});
- el('save').addEventListener('click',function(){var c=collect(); localStorage.setItem('ksrFirebaseConfig',JSON.stringify(c)); show(valid(c)?'Config saved ✅ ఇప్పుడు Login open చేయండి.':'Config saved కానీ కొన్ని values miss అయ్యాయి.', valid(c));});
-});
-</script></body></html>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Setup</title><link rel="stylesheet" href="style.css"></head><body><div class="hero"><h1>KSR DSC Enterprise Setup</h1><p>Config already included</p><div class="nav"><a class="btn gray" href="login.html">Login</a></div></div><div class="wrap"><div class="card"><h2>Firebase Config</h2><p class="msg ok">Config already set in firebase-config.js ✅</p><pre id="cfg"></pre></div></div><script src="firebase-config.js"></script><script>document.getElementById('cfg').textContent=JSON.stringify(window.KSR_FIREBASE_CONFIG,null,2)</script></body></html>
