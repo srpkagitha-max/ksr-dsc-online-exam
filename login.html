@@ -1,1 +1,34 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Login</title><link rel="stylesheet" href="style.css"></head><body><div class="hero"><h1>KSR DSC Enterprise V5.0</h1><p>Admin Login</p><div class="nav"><a class="btn gray" href="index.html">Student</a><a class="btn gray" href="create-admin.html">Create Admin</a></div></div><div class="wrap"><div class="card"><h2>Admin Login</h2><div id="msg"></div><label>Email</label><input id="email" placeholder="admin@gmail.com"><label>Password</label><input id="pass" type="password"><button id="login">Login</button></div></div><script type="module">import{auth,signInWithEmailAndPassword,$,show}from'./app.js';$('login').onclick=async()=>{try{await signInWithEmailAndPassword(auth,$('email').value.trim(),$('pass').value);location.href='dashboard.html'}catch(e){show(e.message,'err')}};</script></body></html>
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Login</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<div class="hero"><h1>KSR DSC Enterprise V5.0</h1><p>Admin Login</p><div class="nav"><a class="btn gray" href="index.html">Student</a><a class="btn gray" href="create-admin.html">Create Admin</a></div></div>
+<div class="wrap"><div class="card"><h2>Admin Login</h2><div id="msg"></div><label>Email</label><input id="email" placeholder="admin@gmail.com"><label>Password</label><input id="pass" type="password"><button id="login" type="button">Login</button></div></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAbaBregtEg9J30xVS7jmocWRAjaZmMyqE",
+  authDomain: "ksr-dsc-enterprise.firebaseapp.com",
+  projectId: "ksr-dsc-enterprise",
+  storageBucket: "ksr-dsc-enterprise.firebasestorage.app",
+  messagingSenderId: "503573969203",
+  appId: "1:503573969203:web:8b87dcfce4d2bd0be9e646",
+  measurementId: "G-ETRH1FRHNM"
+};
+firebase.initializeApp(firebaseConfig);
+function msg(t, cls){ const m=document.getElementById('msg'); m.className='msg '+(cls||''); m.textContent=t; }
+document.getElementById('login').addEventListener('click', async function(){
+  const email=document.getElementById('email').value.trim();
+  const pass=document.getElementById('pass').value;
+  if(!email || !pass){ msg('Email and password enter cheyyi','err'); return; }
+  msg('Login checking...','warn');
+  try{
+    await firebase.auth().signInWithEmailAndPassword(email, pass);
+    msg('Login success. Dashboard open avuthundi...','ok');
+    setTimeout(()=>{ window.location.href='dashboard.html?v=12'; }, 500);
+  }catch(e){ msg(e.message || e.code || 'Login failed','err'); }
+});
+</script>
+</body>
+</html>
