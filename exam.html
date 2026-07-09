@@ -1,1 +1,53 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Exam</title><link rel="stylesheet" href="style.css"></head><body><div class="hero"><h1>KSR DSC Exam</h1><p id="meta">Loading...</p></div><div class="wrap"><div id="msg"></div><div class="examShell"><div class="examTop"><b id="subTitle">Subject</b><span class="timer" id="clock">00:00</span></div><div id="qbox"></div><button id="prev" class="gray">Previous</button><button id="next">Next</button><button id="submit" class="green">Submit Exam</button></div></div><script type="module">import{db,doc,getDoc,setDoc,serverTimestamp,$,show,esc}from'./app.js';import{studentShuffle}from'./parser.js';let qs=[],idx=0,ans={};const p=new URL(location.href).searchParams;const examId=p.get('id'),name=p.get('name')||'Student',phone=p.get('phone')||'';async function init(){const ex=await getDoc(doc(db,'exams',examId));const qd=await getDoc(doc(db,'examQuestions',examId));if(!ex.exists()||!qd.exists())return show('Exam/questions not found','err');$('meta').textContent=ex.data().title+' • '+name;qs=studentShuffle(qd.data().questions||[], phone||name||Date.now());render();}function render(){let q=qs[idx];$('subTitle').textContent=q.subject||'General';$('qbox').innerHTML=`<h2>Q${idx+1}. ${esc(q.question).replace(/\n/g,'<br>')}</h2>`+q.options.map(o=>`<label class=qcard><input type=radio name=a value="${o.key}" ${ans[idx]===o.key?'checked':''}> ${o.key}) ${esc(o.text)}</label>`).join('')+`<p class=small>${idx+1}/${qs.length}</p>`;document.querySelectorAll('input[name=a]').forEach(r=>r.onchange=()=>ans[idx]=r.value)}$('prev').onclick=()=>{if(idx>0){idx--;render();}};$('next').onclick=()=>{if(idx<qs.length-1){idx++;render();}};$('submit').onclick=async()=>{let score=0;qs.forEach((q,i)=>{if(ans[i]===q.answer)score+=Number(q.marks||1)});await setDoc(doc(db,'results',examId+'_'+phone),{examId,name,phone,answers:ans,score,total:qs.length,submittedAt:serverTimestamp()});location.href='result.html?score='+score+'&total='+qs.length+'&name='+encodeURIComponent(name)};init();</script></body></html>
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR DSC Exam</title><link rel="stylesheet" href="style.css"></head>
+<body class="examBody">
+<div id="msg"></div>
+<div class="dscExam">
+  <header class="dscHeader">
+    <div><b id="instName">KSR Institute</b><small id="examTitle">Loading exam...</small></div>
+    <div class="studentBox"><span id="studentName">Student</span><small id="hallTicket">Hall Ticket</small></div>
+    <div class="timerBox"><small>Time Left</small><b id="clock">00:00:00</b></div>
+  </header>
+  <div class="subjectTabs" id="subjectTabs"></div>
+  <main class="dscMain">
+    <section class="questionPanel">
+      <div class="qHead"><b id="qNo">Question 1</b><span id="qSubject" class="pill">Subject</span><span id="qTimer" class="pill blue">Q Time: 00:00</span></div>
+      <div id="qbox" class="questionText"></div>
+      <div id="options" class="optionsGrid"></div>
+      <div class="controls">
+        <button id="prev" class="gray">← Previous</button>
+        <button id="clear" class="orange">Clear Response</button>
+        <button id="review" class="purple">Mark for Review</button>
+        <button id="next" class="green">Save & Next →</button>
+        <button id="submit" class="danger">Submit Test</button>
+      </div>
+    </section>
+    <aside class="palettePanel">
+      <h3>Question Palette</h3>
+      <div class="legend"><span><i class="dot ans"></i>Answered</span><span><i class="dot not"></i>Not Answered</span><span><i class="dot rev"></i>Review</span><span><i class="dot cur"></i>Current</span></div>
+      <div id="palette" class="palette"></div>
+      <div class="summary"><p>Answered: <b id="answeredCount">0</b></p><p>Review: <b id="reviewCount">0</b></p><p>Not Answered: <b id="notCount">0</b></p></div>
+      <button id="fullscreen" class="blueBtn">Enter Full Screen</button>
+    </aside>
+  </main>
+</div>
+<script type="module">
+import{db,doc,getDoc,setDoc,serverTimestamp,$,show,esc}from'./app.js';
+import{studentShuffle}from'./parser.js';
+let qs=[],idx=0,ans={},review={},spent={},qStart=Date.now(),exam={},timerInt=null,qTimerInt=null,remaining=0,strictRemaining=0;
+const p=new URL(location.href).searchParams;const examId=p.get('id'),name=p.get('name')||'Demo Student',phone=p.get('phone')||'9999999999',hall=p.get('hall')||phone;
+function fmt(sec){sec=Math.max(0,Math.floor(sec));let h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
+function fmtMini(sec){sec=Math.max(0,Math.floor(sec));let m=Math.floor(sec/60),s=sec%60;return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
+async function init(){try{const ex=await getDoc(doc(db,'exams',examId));const qd=await getDoc(doc(db,'examQuestions',examId));if(!ex.exists()||!qd.exists())return show('Exam/questions not found','err');exam=ex.data();let raw=qd.data().questions||[];qs=(exam.shuffleQuestions===false)?raw:studentShuffle(raw, phone||name||Date.now());if(exam.shuffleOptions) qs=qs.map(q=>({...q,options:shuffleOptions(q.options||[], phone+q.id)}));$('instName').textContent=exam.instituteCode||'KSR';$('examTitle').textContent=exam.title||'DSC Grand Test';$('studentName').textContent=name;$('hallTicket').textContent='Hall Ticket: '+hall;let autoMinutes=Math.ceil((qs.length*Number(exam.timePerQuestion||30))/60);let totalMin=(exam.timeMode==='perQuestion'||exam.timeMode==='strict')?autoMinutes:Number(exam.totalMinutes||autoMinutes||30);remaining=totalMin*60;renderSubjects();render();startTimers();}catch(e){show(e.message,'err')}}
+function saveTime(){let now=Date.now();spent[idx]=(spent[idx]||0)+Math.round((now-qStart)/1000);qStart=now;}
+function startTimers(){clearInterval(timerInt);clearInterval(qTimerInt);timerInt=setInterval(()=>{remaining--; $('clock').textContent=fmt(remaining); if(remaining<=300) $('clock').classList.add('dangerText'); if(remaining<=0) submitExam(true);},1000);strictRemaining=Number(exam.timePerQuestion||30);qTimerInt=setInterval(()=>{strictRemaining--; $('qTimer').textContent='Q Time: '+fmtMini(strictRemaining); if(exam.timeMode==='strict' && strictRemaining<=0){saveTime(); if(exam.autoNext!==false && idx<qs.length-1){idx++; render();} else if(idx>=qs.length-1){submitExam(true)} else {strictRemaining=Number(exam.timePerQuestion||30)}}},1000);}
+function renderSubjects(){let subs=[...new Set(qs.map(q=>q.subject||'General'))];$('subjectTabs').innerHTML=subs.map(s=>`<button class="subTab" data-s="${esc(s)}">${esc(s)} (${qs.filter(q=>(q.subject||'General')===s).length})</button>`).join('');document.querySelectorAll('.subTab').forEach(b=>b.onclick=()=>{let i=qs.findIndex(q=>(q.subject||'General')===b.dataset.s); if(i>=0){saveTime();idx=i;render();}})}
+function render(){let q=qs[idx];strictRemaining=Number(exam.timePerQuestion||30);qStart=Date.now();$('qNo').textContent=`Question ${idx+1} of ${qs.length}`;$('qSubject').textContent=q.subject||'General';$('qbox').innerHTML=formatQuestion(q.question||'');$('options').innerHTML=(q.options||[]).map(o=>`<label class="optionCard ${ans[idx]===o.key?'selected':''}"><input type="radio" name="a" value="${o.key}" ${ans[idx]===o.key?'checked':''}><b>${o.key}</b><span>${esc(o.text||'')}</span></label>`).join('');document.querySelectorAll('input[name=a]').forEach(r=>r.onchange=()=>{ans[idx]=r.value;renderPaletteOnly();document.querySelectorAll('.optionCard').forEach(c=>c.classList.remove('selected'));r.closest('.optionCard').classList.add('selected')});$('prev').disabled=idx===0 || exam.allowPrevious===false;renderPaletteOnly();}
+function formatQuestion(text){let safe=esc(text).replace(/\n/g,'<br>');safe=safe.replace(/(జాబితా\s*-?\s*[12I]+:)/g,'<b class="listTitle">$1</b>');safe=safe.replace(/(ప్రకటన\s*\d+[:.])/g,'<b class="stmtTitle">$1</b>');return safe;}
+function renderPaletteOnly(){$('palette').innerHTML=qs.map((q,i)=>{let cls=i===idx?'cur':review[i]?'rev':ans[i]?'ans':'not';return `<button class="pbtn ${cls}" data-i="${i}">${i+1}</button>`}).join('');document.querySelectorAll('.pbtn').forEach(b=>b.onclick=()=>{saveTime();idx=Number(b.dataset.i);render();});$('answeredCount').textContent=Object.keys(ans).length;$('reviewCount').textContent=Object.keys(review).length;$('notCount').textContent=qs.length-Object.keys(ans).length;}
+$('prev').onclick=()=>{if(idx>0 && exam.allowPrevious!==false){saveTime();idx--;render();}};$('next').onclick=()=>{if(idx<qs.length-1){saveTime();idx++;render();}else renderPaletteOnly();};$('clear').onclick=()=>{delete ans[idx];render();};$('review').onclick=()=>{review[idx]=!review[idx];renderPaletteOnly();};$('fullscreen').onclick=()=>document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();$('submit').onclick=()=>submitExam(false);
+async function submitExam(auto){if(!auto && !confirm('Submit exam?')) return; clearInterval(timerInt);clearInterval(qTimerInt);saveTime();let score=0;let detail=qs.map((q,i)=>{let correct=ans[i]===q.answer;if(correct)score+=Number(q.marks||1);return {q:i+1,subject:q.subject||'General',answer:ans[i]||'',correctAnswer:q.answer,correct,timeSpent:spent[i]||0}});await setDoc(doc(db,'results',examId+'_'+phone),{examId,name,phone,hall,answers:ans,review,score,total:qs.length,details:detail,submittedAt:serverTimestamp(),autoSubmitted:auto});location.href='result.html?score='+score+'&total='+qs.length+'&name='+encodeURIComponent(name)}
+function shuffleOptions(options, seed){let a=[...options];let r=mulberry32(hash(seed));for(let i=a.length-1;i>0;i--){let j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a.map((o,i)=>({...o,key:'ABCD'[i]}));}
+function hash(str){let h=1779033703; for(let i=0;i<String(str).length;i++){h=Math.imul(h^String(str).charCodeAt(i),3432918353);h=h<<13|h>>>19;} return h>>>0;}function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296;}}
+init();
+</script></body></html>
