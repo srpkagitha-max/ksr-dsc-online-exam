@@ -1,8 +1,10 @@
+import './firebase-config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import { getFirestore, doc, setDoc, getDoc, addDoc, collection, getDocs, query, where, orderBy, serverTimestamp, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 
 const cfg = window.KSR_FIREBASE_CONFIG;
+if(!cfg || !cfg.apiKey){ alert('Firebase config missing. Please upload firebase-config.js correctly.'); }
 export const app = initializeApp(cfg);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
