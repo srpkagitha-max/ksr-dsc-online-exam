@@ -21,6 +21,48 @@ function renderCodes(){$('codesBox').innerHTML=lastCodes.length?`<div class="pri
 $('copyCodes').onclick=async()=>{if(!lastCodes.length)return show('Codes levu.','err');await navigator.clipboard.writeText(`${lastExam.instituteName}\nExam ID: ${lastExam.examId}\n\nStudent Login:\nName: మీ పేరు\nExam ID: ${lastExam.examId}\nExam Code: కింద codes లో మీకు కేటాయించిన code\nPhone No: మీ phone number\n\nCodes:\n`+lastCodes.map(x=>x.code).join('\n'));show('Exam ID + Codes copied ✅')};
 $('printCodes').onclick=()=>{if(!lastCodes.length)return show('Codes levu.','err');printSection('codesBox','Generated Exam Codes')};
 $('loadResults').onclick=loadResults;$('printResults').onclick=()=>printSection('resultsBox','Exam Results & Ranks');
-async function loadResults(){const publicId=norm($('resultExamId').value);if(!publicId)return show('Results kosam Exam ID enter cheyyandi.','err');let examDocId='';const exams=await getDocs(collection(db,'exams'));exams.forEach(d=>{if(norm(d.data().examId||d.data().examCode)===publicId)examDocId=d.id});if(!examDocId)return show('Exam ID dorakaledu.','err');const snap=await getDocs(collection(db,'results'));let rows=[];snap.forEach(d=>{const r=d.data();if(r.examId===examDocId)rows.push(r)});rows.sort((a,b)=>(b.score-a.score)||((a.totalTime||999999)-(b.totalTime||999999))||String(a.name||'').localeCompare(String(b.name||'')));let rank=0,lastScore=null;rows=rows.map((r,i)=>{if(r.score!==lastScore)rank=i+1;lastScore=r.score;return{...r,rank}});$('resultsBox').innerHTML=rows.length?`<div class="print-header"><h2>Results</h2><p>Exam ID: <b>${esc(publicId)}</b></p></div><table class="table"><tr><th>Rank</th><th>Name</th><th>Exam Code</th><th>Score</th><th>Total</th></tr>${rows.map(r=>`<tr><td><b>${r.rank}</b></td><td>${esc(r.name||r.studentName||'-')}</td><td>${esc(r.studentCode||r.examCode||'-')}</td><td><b>${Number(r.score||0)}</b></td><td>${Number(r.total||0)}</td></tr>`).join('')}</table>`:'<p class="msg warn">No results yet.</p>'}
-function printSection(id,title){const el=$(id);if(!el||!el.innerHTML.trim())return show('Print cheyyadaniki data ledu.','err');const w=window.open('','_blank');w.document.write(`<html><head><title>${esc(title)}</title><link rel="stylesheet" href="style.css"><style>body{padding:24px}.table{width:100%;border-collapse:collapse}.table th,.table td{border:1px solid #aaa;padding:8px;text-align:left}@media print{button{display:none}}</style></head><body><h1>${esc(title)}</h1>${el.innerHTML}<script>setTimeout(()=>window.print(),400)<\/script></body></html>`);w.document.close()}
+async function loadResults(){
+  const publicId=norm($('resultExamId').value);
+  if(!publicId)return show('Results kosam Exam ID enter cheyyandi.','err');
+  let examDocId='',examData=null;
+  const exams=await getDocs(collection(db,'exams'));
+  exams.forEach(d=>{const data=d.data();if(norm(data.examId||data.examCode)===publicId){examDocId=d.id;examData={id:d.id,...data}}});
+  if(!examDocId)return show('Exam ID dorakaledu.','err');
+  const snap=await getDocs(collection(db,'results'));let rows=[];
+  snap.forEach(d=>{const r=d.data();if(r.examId===examDocId)rows.push(r)});
+  rows.sort((a,b)=>(Number(b.score||0)-Number(a.score||0))||((Number(a.totalTime)||999999)-(Number(b.totalTime)||999999))||String(a.name||'').localeCompare(String(b.name||'')));
+  let rank=0,lastScore=null;
+  rows=rows.map((r,i)=>{if(Number(r.score)!==lastScore)rank=i+1;lastScore=Number(r.score);return{...r,rank}});
+  if(!rows.length){$('resultsBox').innerHTML='<p class="msg warn">No results yet.</p>';return;}
+  const participants=rows.length;
+  const highest=Math.max(...rows.map(r=>Number(r.score||0)));
+  const totalMarks=Math.max(...rows.map(r=>Number(r.total||0)),0);
+  const avg=(rows.reduce((a,r)=>a+Number(r.score||0),0)/participants).toFixed(2);
+  const avgPct=totalMarks?((Number(avg)/totalMarks)*100).toFixed(1):'0.0';
+  const top3=rows.filter(r=>r.rank<=3).slice(0,3);
+  const medal=['🥇','🥈','🥉'];
+  const institute=examData?.instituteName||examData?.instituteCode||'KSR Institute';
+  const title=examData?.title||'Daily Test';
+  $('resultsBox').innerHTML=`
+    <div class="print-header premiumPrintHeader">
+      <div class="brandSeal">KSR</div>
+      <div><h1>${esc(institute)}</h1><h3>${esc(title)}</h3><p>Exam ID: <b>${esc(publicId)}</b></p></div>
+    </div>
+    <div class="resultSummaryGrid">
+      <div class="summaryCard"><span>Participants</span><b>${participants}</b></div>
+      <div class="summaryCard"><span>Highest Score</span><b>${highest} / ${totalMarks}</b></div>
+      <div class="summaryCard"><span>Average Score</span><b>${avg}</b></div>
+      <div class="summaryCard"><span>Average Accuracy</span><b>${avgPct}%</b></div>
+    </div>
+    <h3 class="sectionTitle">🏆 Top 3 Ranks</h3>
+    <div class="topRankGrid">${top3.map((r,i)=>`<div class="rankCard rank${i+1}"><div class="medal">${medal[i]}</div><div class="rankNo">Rank ${r.rank}</div><h3>${esc(r.name||r.studentName||'-')}</h3><p>Exam Code: <b>${esc(r.studentCode||r.examCode||'-')}</b></p><strong>${Number(r.score||0)} / ${Number(r.total||0)}</strong></div>`).join('')}</div>
+    <h3 class="sectionTitle">Complete Rank List</h3>
+    <table class="table resultTable"><tr><th>Rank</th><th>Name</th><th>Exam Code</th><th>Score</th><th>Total</th></tr>${rows.map(r=>`<tr><td><b>${r.rank}</b></td><td>${esc(r.name||r.studentName||'-')}</td><td>${esc(r.studentCode||r.examCode||'-')}</td><td><b>${Number(r.score||0)}</b></td><td>${Number(r.total||0)}</td></tr>`).join('')}</table>
+    <div class="pdfFooter">${esc(institute)} • Generated by KSR EXAMOS • ${new Date().toLocaleString('en-IN')}</div>`;
+}
+function printSection(id,title){
+  const el=$(id);if(!el||!el.innerHTML.trim())return show('Print cheyyadaniki data ledu.','err');
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><meta charset="utf-8"><title>${esc(title)}</title><link rel="stylesheet" href="style.css"><style>body{padding:24px;background:#fff}.table{width:100%;border-collapse:collapse}.table th,.table td{border:1px solid #b8c6d6;padding:8px;text-align:left}.pdfFooter{margin-top:20px;padding-top:8px;border-top:1px solid #94a3b8;text-align:center;font-size:11px;color:#475569}@page{margin:14mm}@media print{button{display:none!important}.card{box-shadow:none!important}.topRankGrid{break-inside:avoid}.resultSummaryGrid{break-inside:avoid}}</style></head><body>${el.innerHTML}<script>setTimeout(()=>window.print(),500)<\/script></body></html>`);w.document.close();
+}
 $('refreshExams').onclick=loadSavedExams;async function loadSavedExams(){const snap=await getDocs(collection(db,'exams'));let arr=[];snap.forEach(d=>arr.push({id:d.id,...d.data()}));arr.sort((a,b)=>String(b.createdAt?.seconds||0).localeCompare(String(a.createdAt?.seconds||0)));$('savedExams').innerHTML=arr.map(e=>`<div class="qcard"><b>${esc(e.title||e.examId||'Exam')}</b><p>Exam ID: <b>${esc(e.examId||e.examCode||e.id)}</b></p><p>${esc(e.instituteName||'')} • Questions: ${Number(e.questionCount||0)} • Status: ${esc(e.status||'')}</p><div class="action-row"><button class="gray useResult" data-id="${esc(e.examId||e.examCode||'')}">View Results</button></div></div>`).join('')||'<p>No exams</p>';document.querySelectorAll('.useResult').forEach(b=>b.onclick=()=>{$('resultExamId').value=b.dataset.id;loadResults();location.hash='resultsBox'})}

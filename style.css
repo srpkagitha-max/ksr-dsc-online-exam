@@ -82,7 +82,7 @@
     max-width:52vw;
   }
 }
-.examCodeRow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.examCodeRow button{margin:0;white-space:nowrap}.examConfirm h3{margin-top:0}.examConfirm p{margin:8px 0}.dscHeader #examCodeLabel{display:block;margin-top:4px;font-weight:700;opacity:.95}@media(max-width:600px){.examCodeRow{grid-template-columns:1fr}.examCodeRow button{width:100%}}
+.examCodeRow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.examCodeRow button{margin:0;white-space:nowrap}.examConfirm h3{margin-top:0}.examConfirm p{margin:8px 0}.dscHeader #examCodeLabel{display:none!important}@media(max-width:600px){.examCodeRow{grid-template-columns:1fr}.examCodeRow button{width:100%}}
 /* Daily Test Admin release */
 .daily-login{max-width:620px;margin:auto}.bits-box{min-height:260px}.action-row{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.action-row>*{width:auto;margin:0}.health-box{border:1px solid #d7e3ef;background:#f8fbff;border-radius:14px;padding:14px;margin:14px 0}.health-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}.goodText{color:#15803d}.badText{color:#b91c1c}.issue-list{margin-top:10px;color:#b91c1c}.preview-exam{border:1px solid #dbe4ee;border-radius:16px;overflow:hidden}.preview-head{display:flex;justify-content:space-between;background:#0b3b75;color:#fff;padding:14px}.result-buttons{display:flex;align-items:end;gap:10px}.table{width:100%;border-collapse:collapse;overflow-x:auto}.table th,.table td{border:1px solid #dbe4ee;padding:9px;text-align:left}.table th{background:#edf4fb}.print-header{text-align:center}.qhead{display:flex;justify-content:space-between;gap:10px;align-items:center}@media(max-width:700px){.health-grid{grid-template-columns:1fr}.action-row>*{width:100%}.result-buttons{display:grid;grid-template-columns:1fr}.table{font-size:13px}.table th,.table td{padding:6px}.daily-login{padding:16px}}
 
@@ -114,3 +114,26 @@
 
 /* Student answer sheet PDF (rendered off-screen) */
 .answerSheetPdf{position:fixed;left:-10000px;top:0;width:760px;background:#fff;color:#111;padding:28px;font-family:Arial,'Noto Sans Telugu',sans-serif;z-index:-1}.answerSheetPdf .asHead{text-align:center;border-bottom:3px solid #0b3b75;padding-bottom:14px;margin-bottom:16px}.answerSheetPdf .asHead h1{color:#0b3b75;font-size:27px;margin:0 0 5px}.answerSheetPdf .asHead h2{font-size:20px;margin:4px}.answerSheetPdf .asHead p{margin:5px;font-size:14px}.answerSheetPdf .asQuestion{border:1px solid #b8c4d1;border-radius:9px;padding:12px;margin:10px 0;break-inside:avoid}.answerSheetPdf .asQ{font-size:15px;line-height:1.5;margin-bottom:8px}.answerSheetPdf .asOptions{display:grid;gap:5px}.answerSheetPdf .asOption{border:1px solid #d5dde7;border-radius:7px;padding:7px 9px;font-size:13px;display:flex;gap:6px;align-items:flex-start}.answerSheetPdf .asOption span{flex:1}.answerSheetPdf .asSelected{border:2px solid #16a34a;background:#ecfdf5}.answerSheetPdf .asCorrect{box-shadow:inset 4px 0 #2563eb}.answerSheetPdf .asTick{color:#15803d;white-space:nowrap}.answerSheetPdf .asOption em{color:#1d4ed8;font-weight:700;white-space:nowrap}
+
+
+/* Daily Tests v3 — premium polish */
+.compactExamHeader{display:flex!important;grid-template-columns:none!important;align-items:center!important;justify-content:space-between!important;min-height:34px;padding:5px 9px!important;gap:8px!important}
+.compactExamHeader #instName{font-size:14px!important;line-height:1.15!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.compactExamHeader .cornerTimer{font-size:12px!important;white-space:nowrap;flex:0 0 auto;background:#062f5f;border-radius:8px;padding:4px 7px}
+.compactExamHeader .cornerTimer b{font-size:13px!important;display:inline!important}
+.examBody .questionPanel{scroll-margin-top:48px}
+.examBody .pbtn{cursor:pointer;touch-action:manipulation;box-shadow:0 1px 3px #0002}
+.examBody .pbtn:active{transform:scale(.93)}
+.premiumPrintHeader{display:flex;align-items:center;gap:14px;text-align:left;border-bottom:3px solid #0b3b75;padding-bottom:12px;margin-bottom:16px}
+.premiumPrintHeader h1{margin:0;color:#0b3b75;font-size:27px}.premiumPrintHeader h3{margin:3px 0}.premiumPrintHeader p{margin:3px 0}
+.brandSeal,.asBrandMark{width:58px;height:58px;border-radius:14px;background:linear-gradient(135deg,#0b3b75,#1687d9);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:950;font-size:18px;box-shadow:0 5px 12px #0b3b7533}
+.resultSummaryGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
+.summaryCard{border:1px solid #d7e3ef;background:linear-gradient(180deg,#fff,#f2f8ff);border-radius:13px;padding:12px;text-align:center}.summaryCard span{display:block;color:#52667b;font-size:12px}.summaryCard b{display:block;color:#0b3b75;font-size:22px;margin-top:4px}
+.sectionTitle{margin:18px 0 10px;color:#0b3b75}
+.topRankGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.rankCard{border-radius:16px;padding:16px;text-align:center;border:2px solid #dbe4ee;background:#fff;box-shadow:0 6px 18px #0b3b7512}.rankCard .medal{font-size:34px}.rankCard .rankNo{font-size:12px;font-weight:900;text-transform:uppercase;color:#64748b}.rankCard h3{margin:6px 0}.rankCard p{font-size:12px;margin:4px 0}.rankCard strong{font-size:20px;color:#0b3b75}.rank1{border-color:#f2c94c;background:#fffdf2}.rank2{border-color:#b8c2cc;background:#fbfcfd}.rank3{border-color:#cd8b62;background:#fff8f3}
+.pdfFooter{margin-top:18px;padding-top:8px;border-top:1px solid #cbd5e1;text-align:center;font-size:11px;color:#64748b}
+.answerSheetPdf{position:fixed;left:-10000px;top:0;width:760px;background:#fff;color:#111;padding:26px;font-family:Arial,sans-serif}
+.asBrand{display:flex;align-items:center;gap:14px;border-bottom:3px solid #0b3b75;padding-bottom:12px;margin-bottom:12px}.asBrand h1{margin:0;color:#0b3b75;font-size:28px}.asBrand p{margin:3px 0;color:#64748b}.asHead{text-align:center;background:#f5f9ff;border:1px solid #d7e3ef;border-radius:12px;padding:12px;margin-bottom:12px}.asHead h2{margin:0 0 8px;color:#0b3b75}.asHead p{margin:4px}.asQuestion{border:1px solid #dbe4ee;border-radius:10px;padding:10px;margin:10px 0;break-inside:avoid}.asQ{font-size:15px;line-height:1.45;margin-bottom:7px}.asOption{padding:6px 8px;border-radius:7px;margin:4px 0;background:#f8fafc}.asSelected{border:2px solid #2563eb;background:#eff6ff}.asCorrect{background:#ecfdf5}.asTick{float:right;color:#1d4ed8}.asOption em{float:right;color:#15803d;font-weight:700;margin-left:8px}.asFooter{text-align:center;border-top:1px solid #cbd5e1;margin-top:18px;padding-top:8px;font-size:11px;color:#64748b}
+@media(max-width:700px){.resultSummaryGrid{grid-template-columns:repeat(2,1fr)}.topRankGrid{grid-template-columns:1fr}.premiumPrintHeader h1{font-size:21px}.brandSeal{width:48px;height:48px}.compactExamHeader #instName{font-size:13px!important}}
+@media print{.resultSummaryGrid{grid-template-columns:repeat(4,1fr)}.topRankGrid{grid-template-columns:repeat(3,1fr)}.rankCard{box-shadow:none}.premiumPrintHeader{break-inside:avoid}}
