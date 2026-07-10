@@ -62,7 +62,7 @@ function parseBlock(lines, idx, defaultSubject){
     qLines.push(formatQuestionLine(qLines.length?line:cleanQuestionStart(line)));
   }
   const question = compactQuestion(qLines);
-  return { id:'q'+Date.now()+idx, subject, question, options:['A','B','C','D'].map(k=>({key:k,text:opts[k]||''})), answer:ans||'A', marks:1 };
+  return { id:'q'+Date.now()+idx, subject, question, options:['A','B','C','D'].map(k=>({key:k,text:opts[k]||''})), answer:ans||'', marks:1 };
 }
 function isQuestionMetaLine(line){return ROMAN_RE.test(line)||SMALL_ROMAN_RE.test(line)||PRAKATANA_RE.test(line)||LIST_RE.test(line)||/^పై/.test(line);}
 function formatQuestionLine(line){
