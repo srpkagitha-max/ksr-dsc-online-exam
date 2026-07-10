@@ -1,23 +1,10 @@
-KSR Daily Test Release
+# KSR Daily Tests Ready v2
 
-Student Login:
-- Name
-- Exam ID
-- Exam Code
-- Phone Number
-- Start Exam
+Changes:
+- Compact student exam header: Institute name + timer only
+- Smaller question and option text for phone screens
+- Phone number removed from public results/PDF
+- Codes PDF has highlighted institute name, Exam ID and student login instructions
+- On submit, student answer sheet PDF auto-downloads with every question, options, selected answer and correct answer
 
-Admin:
-- Institute Name
-- Exam ID
-- Start / End Time
-- Seconds per Question
-- Student Code Count
-- Paste / Edit / Add / Delete Questions
-- Student Screen Preview
-- Save + Generate Codes
-- Ranked Results
-- Codes and Results Print/PDF
-
-IMPORTANT:
-Upload firestore.rules in Firebase Console > Firestore Database > Rules > Publish.
+Upload all files to GitHub. Existing Firebase rules can remain as currently published.
