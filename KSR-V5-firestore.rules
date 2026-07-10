@@ -1,0 +1,120 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function accessDoc(accessId) {
+      return get(/databases/$(database)/documents/studentAccess/$(accessId));
+    }
+
+    function studentAccessUpdateAllowed() {
+      return request.resource.data.examId == resource.data.examId
+        && request.resource.data.get('examPublicId', '') == resource.data.get('examPublicId', '')
+        && request.resource.data.code == resource.data.code
+        && request.resource.data.get('instituteId', '') == resource.data.get('instituteId', '')
+        && request.resource.data.get('batchId', '') == resource.data.get('batchId', '')
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'studentName',
+          'mobile',
+          'hallTicket',
+          'status',
+          'startedAt',
+          'completedAt',
+          'resultScore'
+        ])
+        && request.resource.data.studentName is string
+        && request.resource.data.mobile is string
+        && (
+          (resource.data.status == 'unused'
+            && request.resource.data.status == 'inProgress')
+          ||
+          (resource.data.status == 'inProgress'
+            && request.resource.data.status in ['inProgress', 'completed'])
+        );
+    }
+
+    // Firebase Authentication admin profiles
+    match /admins/{uid} {
+      allow create: if signedIn() && request.auth.uid == uid;
+      allow read, update, delete: if signedIn();
+    }
+
+    // Legacy admin profile collection, if present
+    match /users/{uid} {
+      allow read, write: if signedIn();
+    }
+
+    // Institute / Batch / Student Master: admin only
+    match /institutes/{instituteId} {
+      allow read, write: if signedIn();
+    }
+
+    match /batches/{batchId} {
+      allow read, write: if signedIn();
+    }
+
+    match /studentMaster/{studentId} {
+      allow read, write: if signedIn();
+    }
+
+    // Students may fetch one exam by its public Exam ID.
+    // Listing all exams is admin-only.
+    match /exams/{examId} {
+      allow get: if true;
+      allow list: if signedIn();
+      allow create, update, delete: if signedIn();
+    }
+
+    // Students may fetch the selected exam's questions.
+    // Listing all question documents is admin-only.
+    match /examQuestions/{examId} {
+      allow get: if true;
+      allow list: if signedIn();
+      allow create, update, delete: if signedIn();
+    }
+
+    // Exam access codes
+    match /studentAccess/{accessId} {
+      // A student can fetch only the code document they enter.
+      allow get: if true;
+      allow list: if signedIn();
+
+      // Only admins generate or remove codes.
+      allow create, delete: if signedIn();
+
+      // Students may only claim a code and later mark it completed.
+      allow update: if signedIn() || studentAccessUpdateAllowed();
+    }
+
+    // Exam results
+    match /results/{resultId} {
+      allow read: if signedIn();
+
+      allow create: if
+        request.resource.data.examId is string
+        && request.resource.data.accessId is string
+        && resultId == request.resource.data.examId + '_' + request.resource.data.accessId
+        && exists(/databases/$(database)/documents/studentAccess/$(request.resource.data.accessId))
+        && accessDoc(request.resource.data.accessId).data.examId == request.resource.data.examId
+        && accessDoc(request.resource.data.accessId).data.status == 'inProgress'
+        && request.resource.data.score is number
+        && request.resource.data.total is number
+        && request.resource.data.score >= 0
+        && request.resource.data.total > 0
+        && request.resource.data.score <= request.resource.data.total
+        && request.resource.data.answers is map
+        && request.resource.data.details is list;
+
+      allow update, delete: if signedIn();
+    }
+
+    // Block every collection not explicitly allowed above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

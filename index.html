@@ -1,20 +1,146 @@
-<!doctype html><html lang="te"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Student Login</title><link rel="stylesheet" href="style.css"></head><body>
-<div class="hero studentBrandHero"><h1>KSR Online Exams</h1><p>Contact : 9063012104</p><div class="nav"><a class="btn gray" href="login.html">Admin Login</a></div></div>
-<div class="wrap"><div class="card daily-login"><h2>Start Your Exam</h2><div id="msg"></div>
-<label>Name</label><input id="name" placeholder="Enter your full name" autocomplete="name">
-<label>Exam ID</label><input id="examId" placeholder="Example: TEST-101" autocomplete="off">
-<label>Exam Code</label><input id="examCode" placeholder="Enter the unique code shared in group" autocomplete="off">
-<label>Phone Number</label><input id="phone" inputmode="numeric" maxlength="10" placeholder="10 digit mobile number" autocomplete="tel">
-<button class="green" id="startExam">Start Exam</button><p class="small">మీ పేరు, గ్రూప్‌లో ఇచ్చిన Exam ID, unique Exam Code మరియు phone number enter చేసి Start Exam నొక్కండి.</p></div></div>
+<!doctype html>
+<html lang="te">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#061a42">
+  <title>KSR Online Exams</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="premiumLoginBody">
+  <div id="splash" class="loginSplash" aria-hidden="true">
+    <div class="splashShield">KSR</div>
+    <h1>KSR ONLINE EXAMS</h1>
+    <p>Professional MCQ Examination Platform</p>
+    <div class="splashLoader"><span></span></div>
+  </div>
+
+  <main class="premiumLoginPage">
+    <section class="premiumLoginHero">
+      <div class="loginHeroGlow glowOne"></div>
+      <div class="loginHeroGlow glowTwo"></div>
+      <div class="loginBrandRow">
+        <div class="loginLogo">KSR</div>
+        <div>
+          <div class="loginEyebrow">SECURE EXAM PORTAL</div>
+          <h1>KSR ONLINE EXAMS</h1>
+        </div>
+      </div>
+      <p class="loginTagline">Professional MCQ Examination Platform</p>
+      <div class="loginContact">☎ Help Desk: <strong>9063012104</strong></div>
+      <div class="secureStrip"><span>🔒 Secure Login</span><span>⚡ Fast & Reliable</span><span>📱 Mobile Friendly</span></div>
+    </section>
+
+    <section class="premiumLoginWrap">
+      <div class="premiumLoginCard">
+        <div class="loginCardTitle">
+          <div class="loginCardIcon">✦</div>
+          <div><h2>Start Your Exam</h2><p>Enter the details shared by your institute</p></div>
+        </div>
+
+        <div id="msg" aria-live="polite"></div>
+
+        <label for="name">👤 Student Name</label>
+        <input id="name" placeholder="Enter your full name" autocomplete="name" enterkeyhint="next">
+
+        <label for="examId">🆔 Exam ID</label>
+        <input id="examId" placeholder="Example: TEST-101" autocomplete="off" autocapitalize="characters" enterkeyhint="next">
+
+        <div id="examPreview" class="examVerifyCard hidden" aria-live="polite"></div>
+
+        <label for="examCode">🔑 Exam Code</label>
+        <input id="examCode" placeholder="Enter the unique code shared in group" autocomplete="one-time-code" autocapitalize="characters" enterkeyhint="next">
+
+        <label for="phone">📱 Phone Number</label>
+        <input id="phone" inputmode="numeric" maxlength="10" placeholder="10 digit mobile number" autocomplete="tel" enterkeyhint="go">
+
+        <button class="premiumStartBtn" id="startExam"><span class="btnText">START EXAM</span><span class="btnArrow">→</span></button>
+
+        <div class="loginHelpBox">
+          <b>Login Instructions</b>
+          <p>మీ పేరు, groupలో ఇచ్చిన Exam ID, మీకు కేటాయించిన Exam Code మరియు phone number enter చేయండి.</p>
+          <small>One exam code can be used only once.</small>
+        </div>
+      </div>
+
+      <a class="adminQuietLink" href="login.html">🔐 Administrator Login</a>
+      <footer class="loginFooter">Powered by <strong>KSR Technologies</strong></footer>
+    </section>
+  </main>
+
 <script type="module">
 import{db,collection,getDocs,getDoc,doc,setDoc,serverTimestamp,$,show}from'./app.js';
 const norm=v=>String(v||'').trim().toUpperCase();
+const fmt=d=>{const x=Date.parse(d||'');return x?new Date(x).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}):'Not specified'};
+let previewExam=null;
+
+setTimeout(()=>document.getElementById('splash')?.classList.add('hideSplash'),1100);
+const saved=JSON.parse(localStorage.getItem('ksrLoginRemember')||'{}');
+if(saved.name)$('name').value=saved.name;
+if(saved.phone)$('phone').value=saved.phone;
 $('phone').addEventListener('input',()=>{$('phone').value=$('phone').value.replace(/\D/g,'').slice(0,10)});
-$('startExam').onclick=async()=>{const name=$('name').value.trim(),examPublicId=norm($('examId').value),code=norm($('examCode').value),phone=$('phone').value.trim();if(!name||!examPublicId||!code||!/^[6-9]\d{9}$/.test(phone))return show('Name, valid Exam ID, Exam Code, 10 digit phone number enter cheyyandi.','err');$('startExam').disabled=true;try{
- let exam=null;const directExam=await getDoc(doc(db,'exams',examPublicId));if(directExam.exists())exam={docId:directExam.id,...directExam.data()};else{const exams=await getDocs(collection(db,'exams'));exams.forEach(d=>{const e=d.data();if(norm(e.examId||e.examCode)===examPublicId&&!exam)exam={docId:d.id,...e}})}if(!exam)return show('Exam ID dorakaledu. Correct Exam ID enter cheyyandi.','err');
- const now=Date.now(),st=Date.parse(exam.startTime||exam.start||''),en=Date.parse(exam.endTime||exam.end||''),loginBefore=Date.parse(exam.loginBefore||exam.startTime||'');if(exam.status!=='active')return show('Ee exam active ga ledu.','err');if(st&&now<st)return show('Exam ఇంకా ప్రారంభం కాలేదు.','warn');if(en&&now>en)return show('Exam ముగిసింది.','err');if(loginBefore&&now>loginBefore&&st&&now<st)return show('Login time ముగిసింది.','err');
- let access=null;const directAccess=await getDoc(doc(db,'studentAccess',code));if(directAccess.exists())access={id:directAccess.id,...directAccess.data()};else{const accessSnap=await getDocs(collection(db,'studentAccess'));accessSnap.forEach(d=>{const a=d.data();if(a.examId===exam.docId&&norm(a.code)===code&&!access)access={id:d.id,...a}})}if(!access||access.examId!==exam.docId)return show('Exam Code invalid. Group lo share chesina correct code enter cheyyandi.','err');if(access.assignedName&&norm(access.assignedName)!==norm(name))return show(`Ee code ${access.assignedName} ki assign chesaru. Mee peru correct ga enter cheyyandi.`,'err');if(access.status==='completed')return show('Ee Exam Code tho exam already completed.','err');if(access.status==='inProgress'&&access.mobile&&access.mobile!==phone)return show('Ee code vere student use chestunnaru.','err');
- await setDoc(doc(db,'studentAccess',access.id),{...access,studentName:name,mobile:phone,hallTicket:phone,status:'inProgress',startedAt:access.startedAt||serverTimestamp()},{merge:true});
- localStorage.setItem('ksrStudent',JSON.stringify({name,phone,examId:examPublicId,code}));location.href=`exam.html?id=${encodeURIComponent(exam.docId)}&access=${encodeURIComponent(access.id)}&studentCode=${encodeURIComponent(code)}`;
- }catch(e){show(e.message,'err')}finally{$('startExam').disabled=false}};
-</script></body></html>
+
+async function findExam(examPublicId){
+  const directExam=await getDoc(doc(db,'exams',examPublicId));
+  if(directExam.exists())return {docId:directExam.id,...directExam.data()};
+  let exam=null;const exams=await getDocs(collection(db,'exams'));
+  exams.forEach(d=>{const e=d.data();if(norm(e.examId||e.examCode)===examPublicId&&!exam)exam={docId:d.id,...e}});
+  return exam;
+}
+
+async function showExamPreview(){
+  const examPublicId=norm($('examId').value);const box=$('examPreview');
+  previewExam=null;if(!examPublicId){box.classList.add('hidden');box.innerHTML='';return;}
+  box.classList.remove('hidden');box.innerHTML='<div class="verifyLoading">Checking exam details…</div>';
+  try{
+    const exam=await findExam(examPublicId);
+    if(!exam){box.innerHTML='<div class="verifyError">⚠ Exam ID not found</div>';return;}
+    previewExam=exam;
+    const qCount=Array.isArray(exam.questions)?exam.questions.length:(Number(exam.questionCount)||'—');
+    const totalMins=exam.secondsPerQuestion&&Number(qCount)?Math.ceil((exam.secondsPerQuestion*Number(qCount))/60):(exam.durationMinutes||'—');
+    const now=Date.now(),st=Date.parse(exam.startTime||exam.start||''),en=Date.parse(exam.endTime||exam.end||'');
+    const status=st&&now<st?'UPCOMING':en&&now>en?'CLOSED':'LIVE';
+    box.innerHTML=`<div class="verifyHead"><b>✓ Exam Verified</b><span class="examStatus ${status.toLowerCase()}">${status}</span></div>
+      <div class="verifyGrid"><div><span>Institute</span><b>${exam.instituteName||exam.institute||'KSR Online Exams'}</b></div>
+      <div><span>Batch</span><b>${exam.batchName||'Open Batch'}</b></div>
+      <div><span>Exam</span><b>${exam.title||exam.examTitle||examPublicId}</b></div>
+      <div><span>Start</span><b>${fmt(exam.startTime||exam.start)}</b></div>
+      <div><span>Questions</span><b>${qCount}</b></div><div><span>Time</span><b>${totalMins==='—'?'—':totalMins+' min'}</b></div></div>`;
+  }catch(e){box.innerHTML='<div class="verifyError">Unable to verify now. You can still continue.</div>';}
+}
+$('examId').addEventListener('blur',showExamPreview);
+$('examId').addEventListener('change',showExamPreview);
+
+const inputs=[$('name'),$('examId'),$('examCode'),$('phone')];
+inputs.forEach((el,i)=>el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(i<inputs.length-1)inputs[i+1].focus();else $('startExam').click();}}));
+
+$('startExam').onclick=async()=>{
+  const name=$('name').value.trim(),examPublicId=norm($('examId').value),code=norm($('examCode').value),phone=$('phone').value.trim();
+  if(!name||!examPublicId||!code||!/^[6-9]\d{9}$/.test(phone))return show('Name, valid Exam ID, Exam Code, 10 digit phone number enter cheyyandi.','err');
+  const btn=$('startExam');btn.disabled=true;btn.classList.add('loading');btn.querySelector('.btnText').textContent='VERIFYING...';
+  try{
+    const exam=previewExam&&norm(previewExam.examId||previewExam.examCode||previewExam.docId)===examPublicId?previewExam:await findExam(examPublicId);
+    if(!exam)return show('Exam ID dorakaledu. Correct Exam ID enter cheyyandi.','err');
+    const now=Date.now(),st=Date.parse(exam.startTime||exam.start||''),en=Date.parse(exam.endTime||exam.end||''),loginBefore=Date.parse(exam.loginBefore||exam.startTime||'');
+    if(exam.status!=='active')return show('Ee exam active ga ledu.','err');
+    if(st&&now<st)return show('Exam ఇంకా ప్రారంభం కాలేదు.','warn');
+    if(en&&now>en)return show('Exam ముగిసింది.','err');
+    if(loginBefore&&now>loginBefore&&st&&now<st)return show('Login time ముగిసింది.','err');
+    let access=null;const directAccess=await getDoc(doc(db,'studentAccess',code));
+    if(directAccess.exists())access={id:directAccess.id,...directAccess.data()};
+    else{const accessSnap=await getDocs(collection(db,'studentAccess'));accessSnap.forEach(d=>{const a=d.data();if(a.examId===exam.docId&&norm(a.code)===code&&!access)access={id:d.id,...a}})}
+    if(!access||access.examId!==exam.docId)return show('Exam Code invalid. Group lo share chesina correct code enter cheyyandi.','err');
+    if(access.assignedName&&norm(access.assignedName)!==norm(name))return show(`Ee code ${access.assignedName} ki assign chesaru. Mee peru correct ga enter cheyyandi.`,'err');
+    if(access.status==='completed')return show('Ee Exam Code tho exam already completed.','err');
+    if(access.status==='inProgress'&&access.mobile&&access.mobile!==phone)return show('Ee code vere student use chestunnaru.','err');
+    await setDoc(doc(db,'studentAccess',access.id),{...access,studentName:name,mobile:phone,hallTicket:phone,status:'inProgress',startedAt:access.startedAt||serverTimestamp()},{merge:true});
+    localStorage.setItem('ksrLoginRemember',JSON.stringify({name,phone}));
+    localStorage.setItem('ksrStudent',JSON.stringify({name,phone,examId:examPublicId,code}));
+    btn.querySelector('.btnText').textContent='SUCCESS ✓';btn.classList.add('success');
+    setTimeout(()=>location.href=`exam.html?id=${encodeURIComponent(exam.docId)}&access=${encodeURIComponent(access.id)}&studentCode=${encodeURIComponent(code)}`,350);
+  }catch(e){show(e.message,'err')}
+  finally{setTimeout(()=>{btn.disabled=false;btn.classList.remove('loading','success');btn.querySelector('.btnText').textContent='START EXAM';},1200)}
+};
+</script>
+</body>
+</html>
