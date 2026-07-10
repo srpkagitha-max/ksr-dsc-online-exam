@@ -21,5 +21,7 @@
 
 <div class="card"><h2>Results & Ranks</h2><div class="grid two"><div><label>Exam ID</label><input id="resultExamId" placeholder="TEST-101"></div><div class="result-buttons"><button id="loadResults">Load Results</button><button id="printResults" class="orange">Download / Print PDF</button></div></div><div id="resultsBox"></div></div>
 
-<div class="card"><h2>Saved Exams</h2><button id="refreshExams" class="gray">Refresh</button><div id="savedExams"></div></div>
+<div class="card"><h2>Saved Exams</h2>
+<div class="exam-search-row"><input id="examSearch" placeholder="Search by Exam ID / Exam Name / Institute"><button id="searchExam">Search Exam</button><button id="loadAllExams" class="gray">Load All Exams</button></div>
+<div id="savedExams"><p class="small">Search exam or press Load All Exams.</p></div></div>
 </div><script type="module" src="admin-daily.js"></script></body></html>
