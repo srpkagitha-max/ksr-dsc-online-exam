@@ -83,3 +83,6 @@
   }
 }
 .examCodeRow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.examCodeRow button{margin:0;white-space:nowrap}.examConfirm h3{margin-top:0}.examConfirm p{margin:8px 0}.dscHeader #examCodeLabel{display:block;margin-top:4px;font-weight:700;opacity:.95}@media(max-width:600px){.examCodeRow{grid-template-columns:1fr}.examCodeRow button{width:100%}}
+
+/* KSR L5 Exam Health */
+.healthGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:12px 0}.healthItem{padding:14px;border:1px solid #dbe3ef;border-radius:12px;background:#f8fafc;text-align:center}.healthItem b{display:block;font-size:22px}.healthItem span{font-size:12px;color:#64748b}.healthItem.good{border-color:#86efac;background:#f0fdf4}.healthItem.bad{border-color:#fca5a5;background:#fef2f2}.healthItem.warn{border-color:#fcd34d;background:#fffbeb}.issueRow{display:flex;flex-direction:column;gap:3px;padding:10px 12px;margin:8px 0;border-radius:10px;border-left:5px solid #f59e0b;background:#fffbeb}.issueRow.error{border-left-color:#dc2626;background:#fef2f2}.issueRow span{font-size:13px;color:#475569}button:disabled{opacity:.5;cursor:not-allowed}
