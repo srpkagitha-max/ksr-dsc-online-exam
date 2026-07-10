@@ -1,13 +1,15 @@
 <!doctype html><html lang="te"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Daily Test Admin</title><link rel="stylesheet" href="style.css"></head><body>
-<div class="hero"><h1>KSR Daily Test Admin</h1><p>Create • Preview • Generate Codes • Results</p><div class="nav"><a class="btn gray" href="index.html">Student Login</a><button class="gray" id="logout">Logout</button></div></div>
+<div class="hero"><h1>KSR Daily Tests v5 Premium</h1><p>Institute • Batch • Exam • Live Monitor • Results</p><div class="nav"><a class="btn gray" href="index.html">Student Login</a><a class="btn orange" href="master-data.html">Institute & Batches</a><a class="btn purple" href="live-monitor.html">Live Monitor</a><button class="gray" id="logout">Logout</button></div></div>
 <div class="wrap"><div id="msg"></div>
 <div class="card"><h2>Create Daily Exam</h2><div class="grid two">
-<div><label>Institute Name</label><input id="instituteName" placeholder="KSR Institute"></div>
+<div><label>Institute</label><select id="instituteId"></select><input id="instituteName" type="hidden"></div>
+<div><label>Batch</label><select id="batchId"></select></div>
 <div><label>Exam ID</label><input id="examId" placeholder="TEST-101"></div>
 <div><label>Exam Name (optional)</label><input id="examTitle" placeholder="Daily Grand Test"></div>
 <div><label>Number of Students / Codes</label><input id="codeCount" type="number" min="1" max="1000" value="50"></div>
 <div><label>Start Time</label><input id="startTime" type="datetime-local"></div>
 <div><label>End Time</label><input id="endTime" type="datetime-local"></div>
+<div><label>Login Before Time</label><input id="loginBefore" type="datetime-local"></div>
 <div><label>Seconds for Each Question</label><input id="secondsPerQuestion" type="number" min="5" max="600" value="60"></div>
 <div><label>Status</label><select id="status"><option value="active">Active</option><option value="draft">Draft</option><option value="closed">Closed</option></select></div>
 </div>
@@ -17,7 +19,7 @@
 
 <div class="card" id="previewCard" hidden><h2>Student Exam Preview</h2><p class="small">ఇది preview మాత్రమే. Result save కాదు.</p><div class="preview-exam"><div class="preview-head"><b id="previewTitle">Exam Preview</b><span id="previewTimer">00:00</span></div><div id="previewContent"></div><div id="previewNav" class="palette"></div></div></div>
 
-<div class="card"><h2>Generated Codes</h2><div class="action-row"><button id="copyCodes" class="gray">Copy All Codes</button><button id="printCodes" class="orange">Download / Print PDF</button></div><div id="codesBox"><p class="small">Exam save చేసిన తర్వాత codes ఇక్కడ కనిపిస్తాయి.</p></div></div>
+<div class="card"><h2>Generated Codes</h2><div class="action-row"><button id="copyCodes" class="gray">Copy All Codes</button><button id="printCodes" class="orange">Download / Print PDF</button><button id="shareWhatsapp" class="green">Share WhatsApp</button></div><div id="codesBox"><p class="small">Exam save చేసిన తర్వాత codes ఇక్కడ కనిపిస్తాయి.</p></div></div>
 
 <div class="card"><h2>Results & Ranks</h2><div class="grid two"><div><label>Exam ID</label><input id="resultExamId" placeholder="TEST-101"></div><div class="result-buttons"><button id="loadResults">Load Results</button><button id="printResults" class="orange">Download / Print PDF</button></div></div><div id="resultsBox"></div></div>
 

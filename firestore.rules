@@ -1,12 +1,44 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn(){ return request.auth != null; }
+    function signedIn() { return request.auth != null; }
+
     match /users/{uid} { allow read, write: if signedIn(); }
     match /institutes/{id} { allow read: if true; allow write: if signedIn(); }
-    match /exams/{id} { allow read: if true; allow write: if signedIn(); }
-    match /examQuestions/{id} { allow read: if true; allow write: if signedIn(); }
-    match /studentAccess/{id} { allow read: if true; allow create: if signedIn(); allow update: if true; }
-    match /results/{id} { allow read: if signedIn(); allow create, update: if true; }
+    match /batches/{id} { allow read: if true; allow write: if signedIn(); }
+    match /studentMaster/{id} { allow read, write: if signedIn(); }
+
+    match /exams/{examId} {
+      allow read: if true;
+      allow create, update, delete: if signedIn();
+    }
+    match /examQuestions/{examId} {
+      allow read: if true;
+      allow create, update, delete: if signedIn();
+    }
+    match /studentAccess/{accessId} {
+      allow read: if true;
+      allow create, delete: if signedIn();
+      allow update: if signedIn() || (
+        request.resource.data.examId == resource.data.examId &&
+        request.resource.data.code == resource.data.code &&
+        request.resource.data.examPublicId == resource.data.examPublicId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'studentName','mobile','hallTicket','status','startedAt','completedAt','resultScore'
+        ]) &&
+        request.resource.data.status in ['unused','inProgress','completed']
+      );
+    }
+    match /results/{resultId} {
+      allow read: if signedIn();
+      allow create: if request.resource.data.examId is string
+        && request.resource.data.score is number
+        && request.resource.data.total is number
+        && request.resource.data.score >= 0
+        && request.resource.data.total >= 0
+        && request.resource.data.score <= request.resource.data.total;
+      allow update, delete: if signedIn();
+    }
+    match /{document=**} { allow read, write: if false; }
   }
 }
