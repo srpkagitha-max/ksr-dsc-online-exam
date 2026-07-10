@@ -82,3 +82,4 @@
     max-width:52vw;
   }
 }
+.examCodeRow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.examCodeRow button{margin:0;white-space:nowrap}.examConfirm h3{margin-top:0}.examConfirm p{margin:8px 0}.dscHeader #examCodeLabel{display:block;margin-top:4px;font-weight:700;opacity:.95}@media(max-width:600px){.examCodeRow{grid-template-columns:1fr}.examCodeRow button{width:100%}}

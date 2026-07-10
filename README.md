@@ -1,15 +1,14 @@
-# KSR DSC Enterprise V5 — Phase 3.2 Quick Release
+# KSR DSC Enterprise V5.0 — Phase 3.3 Exam Code System
 
-Changes:
-- Compact timer at top-right corner
-- Existing DSC-style student screen retained
-- Statement questions keep separate lines
-- Matching questions are temporarily shown as clean normal text (special matching renderer postponed)
-- Full-width options, question palette, subject grouping and subject-wise shuffle retained
+## Added
+- Exam code automatic format: InstituteCode-001, -002, -003...
+- Admin can generate or manually edit Exam Code
+- Duplicate Exam Code validation
+- Student Login now requires Institute Code + Exam Code
+- Exam details confirmation before Start Exam
+- Exam screen header shows Institute Name and Exam Code
+- Direct exam URL is validated against Exam Code
+- Result record stores Exam Code and Institute Code
 
-Upload all files to the GitHub repository root and replace existing files.
-Open with cache-buster: `dashboard.html?v=32` and `exam.html?...&v=32`.
-
-Phase 3.2.1 update:
-- Mobile timer moved slightly toward the center so the full remaining time is always visible.
-- Existing exam UI and submit protection remain unchanged.
+## Important
+Old exams created before this version may not have an Exam Code. Create a new exam in dashboard, or recreate the old exam with a generated code.
