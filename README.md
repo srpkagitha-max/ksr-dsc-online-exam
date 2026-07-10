@@ -9,3 +9,7 @@ Changes:
 
 Upload all files to the GitHub repository root and replace existing files.
 Open with cache-buster: `dashboard.html?v=32` and `exam.html?...&v=32`.
+
+Phase 3.2.1 update:
+- Mobile timer moved slightly toward the center so the full remaining time is always visible.
+- Existing exam UI and submit protection remain unchanged.
