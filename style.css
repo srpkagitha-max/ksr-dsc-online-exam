@@ -30,3 +30,14 @@
   .examActions{display:grid;grid-template-columns:1fr;gap:8px}
   .examActions .btn{width:100%;min-width:0}
 }
+
+/* Phase 3.2 quick release: compact corner timer */
+.dscHeader{padding-right:126px;position:sticky}
+.cornerTimer{position:fixed;top:8px;right:10px;z-index:999;background:transparent;color:#fff;font-weight:900;font-size:15px;letter-spacing:.3px;padding:4px 6px;text-shadow:0 1px 3px #0008;white-space:nowrap}
+.cornerTimer b{display:inline!important;font-size:16px!important}
+@media(max-width:800px){
+  .dscHeader{grid-template-columns:1fr;padding-right:116px;min-height:58px}
+  .studentBox{text-align:left}
+  .cornerTimer{top:9px;right:7px;font-size:14px}
+  .cornerTimer b{font-size:15px!important}
+}

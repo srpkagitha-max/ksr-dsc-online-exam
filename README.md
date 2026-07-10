@@ -1,21 +1,11 @@
-# KSR DSC Enterprise V5 - Phase 3
+# KSR DSC Enterprise V5 — Phase 3.2 Quick Release
 
-Features added:
-- DSC style student exam screen
-- Subject tabs and subject-wise question grouping
-- Question palette with Answered / Not Answered / Review / Current colors
-- Flexible Time Engine
-  - Total time mode
-  - Auto time per question mode
-  - Strict per-question timer mode
-- 60 questions × 30 seconds = 30 minutes auto calculation
-- Allow Previous ON/OFF
-- Auto Next in strict mode
-- Fullscreen button
-- Question-wise time spent tracking
-- Subject-wise shuffle base retained
+Changes:
+- Compact timer at top-right corner
+- Existing DSC-style student screen retained
+- Statement questions keep separate lines
+- Matching questions are temporarily shown as clean normal text (special matching renderer postponed)
+- Full-width options, question palette, subject grouping and subject-wise shuffle retained
 
-Upload all files to GitHub and open:
-- dashboard.html?v=30
-- questions.html?v=30
-- exam.html?id=YOUR_EXAM_ID&name=Demo%20Student&phone=9999999999&v=30
+Upload all files to the GitHub repository root and replace existing files.
+Open with cache-buster: `dashboard.html?v=32` and `exam.html?...&v=32`.

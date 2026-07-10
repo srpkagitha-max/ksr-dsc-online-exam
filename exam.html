@@ -6,7 +6,7 @@
   <header class="dscHeader">
     <div><b id="instName">KSR Institute</b><small id="examTitle">Loading exam...</small></div>
     <div class="studentBox"><span id="studentName">Student</span><small id="hallTicket">Hall Ticket</small></div>
-    <div class="timerBox"><small>Time Left</small><b id="clock">00:00:00</b></div>
+    <div class="cornerTimer" aria-label="Time left">⏱ <b id="clock">00:00:00</b></div>
   </header>
   <div class="subjectTabs" id="subjectTabs"></div>
   <main class="dscMain">
@@ -45,10 +45,11 @@ function renderSubjects(){let subs=[...new Set(qs.map(q=>q.subject||'General'))]
 function render(){let q=qs[idx];strictRemaining=Number(exam.timePerQuestion||30);qStart=Date.now();$('qNo').textContent=`Question ${idx+1}`;$('totalQuestions').textContent=qs.length;$('qSubject').textContent=q.subject||'General';$('qbox').innerHTML=formatQuestion(q.question||'');$('options').innerHTML=(q.options||[]).map(o=>`<label class="optionCard ${ans[idx]===o.key?'selected':''}"><input type="radio" name="a" value="${o.key}" ${ans[idx]===o.key?'checked':''}><b>${o.key}</b><span>${esc(o.text||'')}</span></label>`).join('');document.querySelectorAll('input[name=a]').forEach(r=>r.onchange=()=>{ans[idx]=r.value;renderPaletteOnly();document.querySelectorAll('.optionCard').forEach(c=>c.classList.remove('selected'));r.closest('.optionCard').classList.add('selected')});$('prev').disabled=idx===0 || exam.allowPrevious===false;renderPaletteOnly();}
 function formatQuestion(text){
   const t=String(text||'').trim();
-  if(/జాబితా\s*-?\s*(?:1|I)/i.test(t)&&/జాబితా\s*-?\s*(?:2|II)/i.test(t)) return formatMatching(t);
   let safe=esc(t);
   safe=safe.replace(/\s+(?=(?:I{1,4}|i{1,4})[.:]\s)/g,'\n');
   safe=safe.replace(/\s+(?=ప్రకటన\s*\d+\s*[:.])/g,'\n');
+  safe=safe.replace(/\s+(?=జాబితా\s*-?\s*(?:1|2|I|II)\s*:)/gi,'\n');
+  safe=safe.replace(/,\s*(?=(?:A|B|C|D|a|b|c|d|i|ii|iii|iv|1|2|3|4)[.)]\s)/g,'\n');
   safe=safe.replace(/\n/g,'<br>');
   safe=safe.replace(/((?:I{1,4}|i{1,4})[.:])/g,'<b class="stmtTitle">$1</b>');
   safe=safe.replace(/(ప్రకటన\s*\d+\s*[:.])/g,'<b class="stmtTitle">$1</b>');
