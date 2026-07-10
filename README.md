@@ -1,14 +1,22 @@
-# KSR DSC Enterprise V5.0 — Phase 3.3 Exam Code System
+# KSR EXAMOS ULTIMATE v1.0 Stable
 
-## Added
-- Exam code automatic format: InstituteCode-001, -002, -003...
-- Admin can generate or manually edit Exam Code
-- Duplicate Exam Code validation
-- Student Login now requires Institute Code + Exam Code
-- Exam details confirmation before Start Exam
-- Exam screen header shows Institute Name and Exam Code
-- Direct exam URL is validated against Exam Code
-- Result record stores Exam Code and Institute Code
+Stable CBT release with Firebase Authentication and Firestore.
+
+## Included
+- Admin login, institute and exam creation
+- Manual total exam time
+- Exam code login
+- Bulk question parser and editor
+- Student preview and DSC-style exam screen
+- Subject-wise grouping and deterministic jumbling
+- Option shuffle with correct-answer remapping
+- Local auto-save and same-device resume
+- Submit confirmation, unanswered warning and auto-submit
+- Back-button protection
+- Mobile responsive layout
+
+## Deploy
+Upload all files to the repository root and enable GitHub Pages from the main branch.
 
 ## Important
-Old exams created before this version may not have an Exam Code. Create a new exam in dashboard, or recreate the old exam with a generated code.
+Keep Firestore rules restricted to authenticated admin writes. Test with a small exam before live use.
