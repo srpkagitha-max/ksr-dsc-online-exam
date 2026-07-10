@@ -11,7 +11,7 @@
   <div class="subjectTabs" id="subjectTabs"></div>
   <main class="dscMain">
     <section class="questionPanel">
-      <div class="qHead"><b id="qNo">Question 1</b><span id="qSubject" class="pill">Subject</span><span id="qTimer" class="pill blue">Q Time: 00:00</span></div>
+      <div class="qHead"><b id="qNo">Question 1</b><span class="qTotal">Total Questions: <b id="totalQuestions">0</b></span><span id="qSubject" class="pill">Subject</span><span id="qTimer" class="pill blue">Q Time: 00:00</span></div>
       <div id="qbox" class="questionText"></div>
       <div id="options" class="optionsGrid"></div>
       <div class="controls">
@@ -42,8 +42,34 @@ async function init(){try{const ex=await getDoc(doc(db,'exams',examId));const qd
 function saveTime(){let now=Date.now();spent[idx]=(spent[idx]||0)+Math.round((now-qStart)/1000);qStart=now;}
 function startTimers(){clearInterval(timerInt);clearInterval(qTimerInt);timerInt=setInterval(()=>{remaining--; $('clock').textContent=fmt(remaining); if(remaining<=300) $('clock').classList.add('dangerText'); if(remaining<=0) submitExam(true);},1000);strictRemaining=Number(exam.timePerQuestion||30);qTimerInt=setInterval(()=>{strictRemaining--; $('qTimer').textContent='Q Time: '+fmtMini(strictRemaining); if(exam.timeMode==='strict' && strictRemaining<=0){saveTime(); if(exam.autoNext!==false && idx<qs.length-1){idx++; render();} else if(idx>=qs.length-1){submitExam(true)} else {strictRemaining=Number(exam.timePerQuestion||30)}}},1000);}
 function renderSubjects(){let subs=[...new Set(qs.map(q=>q.subject||'General'))];$('subjectTabs').innerHTML=subs.map(s=>`<button class="subTab" data-s="${esc(s)}">${esc(s)} (${qs.filter(q=>(q.subject||'General')===s).length})</button>`).join('');document.querySelectorAll('.subTab').forEach(b=>b.onclick=()=>{let i=qs.findIndex(q=>(q.subject||'General')===b.dataset.s); if(i>=0){saveTime();idx=i;render();}})}
-function render(){let q=qs[idx];strictRemaining=Number(exam.timePerQuestion||30);qStart=Date.now();$('qNo').textContent=`Question ${idx+1} of ${qs.length}`;$('qSubject').textContent=q.subject||'General';$('qbox').innerHTML=formatQuestion(q.question||'');$('options').innerHTML=(q.options||[]).map(o=>`<label class="optionCard ${ans[idx]===o.key?'selected':''}"><input type="radio" name="a" value="${o.key}" ${ans[idx]===o.key?'checked':''}><b>${o.key}</b><span>${esc(o.text||'')}</span></label>`).join('');document.querySelectorAll('input[name=a]').forEach(r=>r.onchange=()=>{ans[idx]=r.value;renderPaletteOnly();document.querySelectorAll('.optionCard').forEach(c=>c.classList.remove('selected'));r.closest('.optionCard').classList.add('selected')});$('prev').disabled=idx===0 || exam.allowPrevious===false;renderPaletteOnly();}
-function formatQuestion(text){let safe=esc(text).replace(/\n/g,'<br>');safe=safe.replace(/(జాబితా\s*-?\s*[12I]+:)/g,'<b class="listTitle">$1</b>');safe=safe.replace(/(ప్రకటన\s*\d+[:.])/g,'<b class="stmtTitle">$1</b>');return safe;}
+function render(){let q=qs[idx];strictRemaining=Number(exam.timePerQuestion||30);qStart=Date.now();$('qNo').textContent=`Question ${idx+1}`;$('totalQuestions').textContent=qs.length;$('qSubject').textContent=q.subject||'General';$('qbox').innerHTML=formatQuestion(q.question||'');$('options').innerHTML=(q.options||[]).map(o=>`<label class="optionCard ${ans[idx]===o.key?'selected':''}"><input type="radio" name="a" value="${o.key}" ${ans[idx]===o.key?'checked':''}><b>${o.key}</b><span>${esc(o.text||'')}</span></label>`).join('');document.querySelectorAll('input[name=a]').forEach(r=>r.onchange=()=>{ans[idx]=r.value;renderPaletteOnly();document.querySelectorAll('.optionCard').forEach(c=>c.classList.remove('selected'));r.closest('.optionCard').classList.add('selected')});$('prev').disabled=idx===0 || exam.allowPrevious===false;renderPaletteOnly();}
+function formatQuestion(text){
+  const t=String(text||'').trim();
+  if(/జాబితా\s*-?\s*(?:1|I)/i.test(t)&&/జాబితా\s*-?\s*(?:2|II)/i.test(t)) return formatMatching(t);
+  let safe=esc(t);
+  safe=safe.replace(/\s+(?=(?:I{1,4}|i{1,4})[.:]\s)/g,'\n');
+  safe=safe.replace(/\s+(?=ప్రకటన\s*\d+\s*[:.])/g,'\n');
+  safe=safe.replace(/\n/g,'<br>');
+  safe=safe.replace(/((?:I{1,4}|i{1,4})[.:])/g,'<b class="stmtTitle">$1</b>');
+  safe=safe.replace(/(ప్రకటన\s*\d+\s*[:.])/g,'<b class="stmtTitle">$1</b>');
+  return safe;
+}
+function formatMatching(text){
+  const parts=text.split(/జాబితా\s*-?\s*(?:2|II)\s*:/i);
+  let left=(parts[0]||'').replace(/జాబితా\s*-?\s*(?:1|I)\s*:/i,'').trim();
+  let right=(parts[1]||'').trim();
+  const splitItems=(src,pattern)=>{
+    let arr=src.split(pattern).map(x=>x.trim()).filter(Boolean);
+    return arr;
+  };
+  const leftItems=splitItems(left,/(?=\b(?:A|B|C|D|i|ii|iii|iv|1|2|3|4)[.)]\s*)/i);
+  const rightItems=splitItems(right,/(?=\b(?:a|b|c|d|1|2|3|4)[.)]\s*)/i);
+  const rows=Math.max(leftItems.length,rightItems.length,1);
+  let html='<div class="matchingBox"><div class="matchHead">Column - I</div><div class="matchHead">Column - II</div>';
+  for(let i=0;i<rows;i++) html+=`<div class="matchCell">${esc(leftItems[i]||'')}</div><div class="matchCell">${esc(rightItems[i]||'')}</div>`;
+  html+='</div>';
+  return html;
+}
 function renderPaletteOnly(){$('palette').innerHTML=qs.map((q,i)=>{let cls=i===idx?'cur':review[i]?'rev':ans[i]?'ans':'not';return `<button class="pbtn ${cls}" data-i="${i}">${i+1}</button>`}).join('');document.querySelectorAll('.pbtn').forEach(b=>b.onclick=()=>{saveTime();idx=Number(b.dataset.i);render();});$('answeredCount').textContent=Object.keys(ans).length;$('reviewCount').textContent=Object.keys(review).length;$('notCount').textContent=qs.length-Object.keys(ans).length;}
 $('prev').onclick=()=>{if(idx>0 && exam.allowPrevious!==false){saveTime();idx--;render();}};$('next').onclick=()=>{if(idx<qs.length-1){saveTime();idx++;render();}else renderPaletteOnly();};$('clear').onclick=()=>{delete ans[idx];render();};$('review').onclick=()=>{review[idx]=!review[idx];renderPaletteOnly();};$('fullscreen').onclick=()=>document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();$('submit').onclick=()=>submitExam(false);
 async function submitExam(auto){if(!auto && !confirm('Submit exam?')) return; clearInterval(timerInt);clearInterval(qTimerInt);saveTime();let score=0;let detail=qs.map((q,i)=>{let correct=ans[i]===q.answer;if(correct)score+=Number(q.marks||1);return {q:i+1,subject:q.subject||'General',answer:ans[i]||'',correctAnswer:q.answer,correct,timeSpent:spent[i]||0}});await setDoc(doc(db,'results',examId+'_'+phone),{examId,name,phone,hall,answers:ans,review,score,total:qs.length,details:detail,submittedAt:serverTimestamp(),autoSubmitted:auto});location.href='result.html?score='+score+'&total='+qs.length+'&name='+encodeURIComponent(name)}
