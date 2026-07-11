@@ -1755,9 +1755,39 @@ async function loadResults() {
 
   resultSnapshot.forEach(documentSnapshot => {
     const result = documentSnapshot.data();
+    const resultDocId = norm(documentSnapshot.id);
 
-    if (result.examId === examDocId) {
-      rows.push(result);
+    const possibleExamIds = [
+      result.examId,
+      result.examPublicId,
+      result.examCode,
+      result.publicExamId,
+      result.exam?.id,
+      result.exam?.examId,
+      result.accessId
+    ].map(norm).filter(Boolean);
+
+    const matchesExam =
+      possibleExamIds.includes(norm(examDocId)) ||
+      possibleExamIds.includes(publicId) ||
+      resultDocId === publicId ||
+      resultDocId.startsWith(publicId + '_') ||
+      resultDocId.startsWith(publicId + '-') ||
+      resultDocId.includes('_' + publicId + '_');
+
+    if (matchesExam) {
+      rows.push({
+        id: documentSnapshot.id,
+        ...result,
+        name: result.name || result.studentName || result.assignedName || result.student?.name || '-',
+        studentName: result.studentName || result.name || result.assignedName || result.student?.name || '-',
+        studentCode: result.studentCode || result.examCode || result.accessId || result.code || '-',
+        examCode: result.examCode || result.studentCode || result.accessId || result.code || '-',
+        batchName: result.batchName || examData?.batchName || '-',
+        totalTime: Number(result.totalTime || result.timeTaken || result.durationSeconds || 0),
+        score: Number(result.score || result.marks || result.obtainedMarks || 0),
+        total: Number(result.total || result.totalMarks || result.questionCount || examData?.questionCount || 0)
+      });
     }
   });
 
