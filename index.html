@@ -7,65 +7,49 @@
   <title>KSR Online Exams</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="premiumLoginBody">
-  <div id="splash" class="loginSplash" aria-hidden="true">
-    <div class="splashShield">KSR</div>
-    <h1>KSR ONLINE EXAMS</h1>
-    <p>Professional MCQ Examination Platform</p>
-    <div class="splashLoader"><span></span></div>
-  </div>
+<body class="simpleStudentLogin">
+  <header class="simpleLoginHeader">
+    <div class="simpleBrandMark">KSR</div>
+    <div>
+      <h1>KSR ONLINE EXAMS</h1>
+      <p>Professional MCQ Examination Platform</p>
+      <a href="tel:9063012104">Help Desk: 9063012104</a>
+    </div>
+  </header>
 
-  <main class="premiumLoginPage">
-    <section class="premiumLoginHero">
-      <div class="loginHeroGlow glowOne"></div>
-      <div class="loginHeroGlow glowTwo"></div>
-      <div class="loginBrandRow">
-        <div class="loginLogo">KSR</div>
-        <div>
-          <div class="loginEyebrow">SECURE EXAM PORTAL</div>
-          <h1>KSR ONLINE EXAMS</h1>
-        </div>
-      </div>
-      <p class="loginTagline">Professional MCQ Examination Platform</p>
-      <div class="loginContact">☎ Help Desk: <strong>9063012104</strong></div>
-      <div class="secureStrip"><span>🔒 Secure Login</span><span>⚡ Fast & Reliable</span><span>📱 Mobile Friendly</span></div>
-    </section>
-
-    <section class="premiumLoginWrap">
-      <div class="premiumLoginCard">
-        <div class="loginCardTitle">
-          <div class="loginCardIcon">✦</div>
-          <div><h2>Start Your Exam</h2><p>Enter the details shared by your institute</p></div>
-        </div>
-
-        <div id="msg" aria-live="polite"></div>
-
-        <label for="name">👤 Student Name</label>
-        <input id="name" placeholder="Enter your full name" autocomplete="name" enterkeyhint="next">
-
-        <label for="examId">🆔 Exam ID</label>
-        <input id="examId" placeholder="Example: TEST-101" autocomplete="off" autocapitalize="characters" enterkeyhint="next">
-
-        <div id="examPreview" class="examVerifyCard hidden" aria-live="polite"></div>
-
-        <label for="examCode">🔑 Exam Code</label>
-        <input id="examCode" placeholder="Enter the unique code shared in group" autocomplete="one-time-code" autocapitalize="characters" enterkeyhint="next">
-
-        <label for="phone">📱 Phone Number</label>
-        <input id="phone" inputmode="numeric" maxlength="10" placeholder="10 digit mobile number" autocomplete="tel" enterkeyhint="go">
-
-        <button class="premiumStartBtn" id="startExam"><span class="btnText">START EXAM</span><span class="btnArrow">→</span></button>
-
-        <div class="loginHelpBox">
-          <b>Login Instructions</b>
-          <p>మీ పేరు, groupలో ఇచ్చిన Exam ID, మీకు కేటాయించిన Exam Code మరియు phone number enter చేయండి.</p>
-          <small>One exam code can be used only once.</small>
-        </div>
+  <main class="simpleLoginWrap">
+    <section class="simpleLoginCard">
+      <div id="msg"></div>
+      <div class="simpleLoginTitle">
+        <h2>Student Login</h2>
+        <p>Enter the details shared by your institute</p>
       </div>
 
-      <a class="adminQuietLink" href="login.html">🔐 Administrator Login</a>
-      <footer class="loginFooter">Powered by <strong>KSR Technologies</strong></footer>
+      <label for="name">Student Name</label>
+      <input id="name" autocomplete="name" placeholder="Enter your name">
+
+      <label for="examId">Exam ID</label>
+      <input id="examId" autocomplete="off" placeholder="Enter Exam ID">
+      <div id="examPreview" class="examVerifyBox hidden"></div>
+
+      <label for="examCode">Exam Code</label>
+      <input id="examCode" autocomplete="off" placeholder="Enter Exam Code">
+
+      <label for="phone">Phone Number</label>
+      <input id="phone" inputmode="numeric" autocomplete="tel" placeholder="Enter 10-digit phone number">
+
+      <button id="startExam" class="simpleStartBtn">
+        <span class="btnText">START EXAM</span><span class="btnArrow">→</span>
+      </button>
+
+      <div class="simpleLoginNote">
+        <b>Secure Exam Login</b>
+        <span>Use the Exam ID and code shared by your institute. One code works for one student only.</span>
+      </div>
+
+      <a class="simpleAdminLink" href="login.html">Administrator Login</a>
     </section>
+    <footer class="simpleLoginFooter">Powered by KSR Technologies</footer>
   </main>
 
 <script type="module">
