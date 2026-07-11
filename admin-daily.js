@@ -1,12 +1,29 @@
-import{auth,db,onAuthStateChanged,signOut,collection,getDocs,getDoc,addDoc,doc,setDoc,serverTimestamp,writeBatch,$,show,esc}from'./app.js';
+import{auth,db,onAuthStateChanged,signOut,collection,getDocs,getDoc,addDoc,doc,setDoc,updateDoc,deleteDoc,serverTimestamp,writeBatch,$,show,esc}from'./app.js';
 import{parseQuestions,blankQuestion}from'./parser.js';
 let user=null,questions=[],previewIndex=0,lastCodes=[],lastExam=null,institutes=[],batches=[],batchStudents=[];
 const norm=v=>String(v||'').trim().toUpperCase();
 function flash(message,type='ok'){let box=document.getElementById('floatingNotice');if(!box){box=document.createElement('div');box.id='floatingNotice';document.body.appendChild(box)}box.className=`floatingNotice ${type}`;box.textContent=message;box.hidden=false;clearTimeout(window.__ksrNoticeTimer);window.__ksrNoticeTimer=setTimeout(()=>box.hidden=true,2600)}
-onAuthStateChanged(auth,u=>{if(!u)location.href='login.html';else{user=u;setDefaultTimes();loadMasters();restoreDraft();}});
+onAuthStateChanged(auth,u=>{if(!u)location.href='login.html';else{user=u;setDefaultTimes();loadMasters();clearCreateForm(false);}});
 $('logout').onclick=()=>signOut(auth);
 $('instituteId').onchange=()=>{renderBatchOptions();syncInstituteName();saveDraft()};$('batchId').onchange=()=>{loadBatchStudents();saveDraft()};
 function setDefaultTimes(){const now=new Date(),end=new Date(now.getTime()+2*60*60*1000),fmt=d=>{const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`};$('startTime').value=fmt(now);$('endTime').value=fmt(end)}
+function clearCreateForm(showNotice=true){
+  questions=[];previewIndex=0;
+  ['examId','examTitle','loginBefore','rawBits'].forEach(id=>{if($(id))$(id).value=''});
+  if($('codeCount'))$('codeCount').value='50';
+  if($('secondsPerQuestion'))$('secondsPerQuestion').value='60';
+  if($('status'))$('status').value='active';
+  setDefaultTimes();
+  if($('questionEditor')){$('questionEditor').innerHTML='';$('questionEditor').dataset.open='0'}
+  if($('parseBtn'))$('parseBtn').textContent='Parse Questions';
+  if($('previewCard'))$('previewCard').hidden=true;
+  renderHealth();
+  if(showNotice)flash('Fresh exam form ready ✅');
+}
+window.addEventListener('ksr:new-exam',()=>clearCreateForm(false));
+$('clearExamFormBtn')?.addEventListener('click',()=>{if(confirm('Current form clear cheyyala?')){localStorage.removeItem(DRAFT_KEY);clearCreateForm(true)}});
+$('recoverDraftBtn')?.addEventListener('click',()=>restoreDraft(true));
+
 $('examId').addEventListener('input',()=>{$('examId').value=norm($('examId').value).replace(/\s+/g,'-');saveDraft()});
 ['examTitle','codeCount','startTime','endTime','loginBefore','secondsPerQuestion','status','rawBits'].forEach(id=>$(id)?.addEventListener('input',saveDraft));
 
@@ -22,7 +39,7 @@ function syncInstituteName(){const i=institutes.find(x=>x.id===$('instituteId').
 async function loadBatchStudents(){const bid=$('batchId').value;batchStudents=[];if(!bid)return;const snap=await getDocs(collection(db,'studentMaster'));snap.forEach(d=>{const x=d.data();if(x.batchId===bid&&x.active!==false)batchStudents.push({id:d.id,...x})});batchStudents.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));if(batchStudents.length)$('codeCount').value=batchStudents.length}
 const DRAFT_KEY='ksrDailyV5Draft';
 function saveDraft(){try{localStorage.setItem(DRAFT_KEY,JSON.stringify({instituteId:$('instituteId')?.value,batchId:$('batchId')?.value,examId:$('examId')?.value,examTitle:$('examTitle')?.value,codeCount:$('codeCount')?.value,startTime:$('startTime')?.value,endTime:$('endTime')?.value,loginBefore:$('loginBefore')?.value,secondsPerQuestion:$('secondsPerQuestion')?.value,status:$('status')?.value,rawBits:$('rawBits')?.value,questions}))}catch(e){}}
-function restoreDraft(){try{const d=JSON.parse(localStorage.getItem(DRAFT_KEY)||'null');if(!d)return;['examId','examTitle','codeCount','startTime','endTime','loginBefore','secondsPerQuestion','status','rawBits'].forEach(id=>{if(d[id]!=null&&$(id))$(id).value=d[id]});if(Array.isArray(d.questions)&&d.questions.length){questions=d.questions;renderHealth()}flash('Previous draft restored ✅','ok')}catch(e){}}
+function restoreDraft(notify=true){try{const d=JSON.parse(localStorage.getItem(DRAFT_KEY)||'null');if(!d){if(notify)flash('Saved draft ledu.','err');return}['examId','examTitle','codeCount','startTime','endTime','loginBefore','secondsPerQuestion','status','rawBits'].forEach(id=>{if(d[id]!=null&&$(id))$(id).value=d[id]});if(Array.isArray(d.questions)&&d.questions.length){questions=d.questions;renderHealth()}if(notify)flash('Previous draft restored ✅','ok')}catch(e){if(notify)flash('Draft restore avvaledu.','err')}}
 
 $('parseBtn').onclick=()=>{
   const editor=$('questionEditor');
@@ -120,14 +137,37 @@ function printSection(id,title){
   const w=window.open('','_blank');
   w.document.write(`<html><head><meta charset="utf-8"><title>${esc(title)}</title><link rel="stylesheet" href="style.css"><style>body{padding:24px;background:#fff}.table{width:100%;border-collapse:collapse}.table th,.table td{border:1px solid #b8c6d6;padding:8px;text-align:left}.pdfFooter{margin-top:20px;padding-top:8px;border-top:1px solid #94a3b8;text-align:center;font-size:11px;color:#475569}@page{margin:14mm}@media print{button{display:none!important}.card{box-shadow:none!important}.topRankGrid{break-inside:avoid}.resultSummaryGrid{break-inside:avoid}}</style></head><body>${el.innerHTML}<script>setTimeout(()=>window.print(),500)<\/script></body></html>`);w.document.close();
 }
-let allSavedExams=[];
+let allSavedExams=[],savedView='active';
 $('searchExam').onclick=async()=>{await ensureExamsLoaded();renderSavedExams($('examSearch').value)};
 $('loadAllExams').onclick=async()=>{await ensureExamsLoaded(true);$('examSearch').value='';renderSavedExams('')};
 $('examSearch').addEventListener('keydown',e=>{if(e.key==='Enter')$('searchExam').click()});
+document.querySelectorAll('.examViewBtn').forEach(b=>b.onclick=()=>{savedView=b.dataset.view;document.querySelectorAll('.examViewBtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderSavedExams($('examSearch').value)});
 async function ensureExamsLoaded(force=false){if(allSavedExams.length&&!force)return;const snap=await getDocs(collection(db,'exams'));allSavedExams=[];snap.forEach(d=>allSavedExams.push({id:d.id,...d.data()}));allSavedExams.sort((a,b)=>Number(b.createdAt?.seconds||0)-Number(a.createdAt?.seconds||0))}
+function examBucket(e){if(e.status==='deleted'||e.deletedAt)return'deleted';if(e.status==='archived'||e.archivedAt)return'archived';return'active'}
 function renderSavedExams(term=''){
   const key=String(term||'').trim().toLowerCase();
-  const arr=key?allSavedExams.filter(e=>[e.title,e.examId,e.examCode,e.instituteName,e.instituteCode].some(v=>String(v||'').toLowerCase().includes(key))):allSavedExams;
-  $('savedExams').innerHTML=arr.map(e=>`<div class="qcard"><b>${esc(e.title||e.examId||'Exam')}</b><p>Exam ID: <b>${esc(e.examId||e.examCode||e.id)}</b></p><p>${esc(e.instituteName||'')} • Questions: ${Number(e.questionCount||0)} • Status: ${esc(e.status||'')}</p><div class="action-row"><button class="gray useResult" data-id="${esc(e.examId||e.examCode||'')}">View Results</button></div></div>`).join('')||(key?'<p class="msg warn">Matching exam dorakaledu.</p>':'<p>No exams</p>');
-  document.querySelectorAll('.useResult').forEach(b=>b.onclick=()=>{$('resultExamId').value=b.dataset.id;loadResults();location.hash='resultsBox'})
+  let arr=allSavedExams.filter(e=>examBucket(e)===savedView);
+  if(key)arr=arr.filter(e=>[e.title,e.examId,e.examCode,e.instituteName,e.instituteCode,e.batchName].some(v=>String(v||'').toLowerCase().includes(key)));
+  $('savedExams').innerHTML=arr.map(e=>{const publicId=e.examId||e.examCode||e.id;let actions='';
+    if(savedView==='active')actions=`<button class="gray useResult" data-id="${esc(publicId)}">Results</button><button class="orange archiveExam" data-doc="${esc(e.id)}">Archive</button><button class="danger trashExam" data-doc="${esc(e.id)}">Delete</button>`;
+    else if(savedView==='archived')actions=`<button class="green restoreExam" data-doc="${esc(e.id)}">Restore</button><button class="danger trashExam" data-doc="${esc(e.id)}">Move to Bin</button>`;
+    else actions=`<button class="green restoreExam" data-doc="${esc(e.id)}">Restore</button><button class="danger permanentDeleteExam" data-doc="${esc(e.id)}" data-name="${esc(publicId)}">Delete Permanently</button>`;
+    return `<div class="qcard"><b>${esc(e.title||publicId||'Exam')}</b><p>Exam ID: <b>${esc(publicId)}</b></p><p>${esc(e.instituteName||'')} ${e.batchName?'• '+esc(e.batchName):''} • Questions: ${Number(e.questionCount||0)} • Status: ${esc(e.status||'active')}</p><div class="action-row">${actions}</div></div>`}).join('')||(key?'<p class="msg warn">Matching exam dorakaledu.</p>':'<p class="msg warn">Ee section lo exams levu.</p>');
+  document.querySelectorAll('.useResult').forEach(b=>b.onclick=()=>{$('resultExamId').value=b.dataset.id;document.querySelector('[data-open="resultsPanel"]')?.click();loadResults()});
+  document.querySelectorAll('.archiveExam').forEach(b=>b.onclick=()=>changeExamState(b.dataset.doc,'archived'));
+  document.querySelectorAll('.trashExam').forEach(b=>b.onclick=()=>changeExamState(b.dataset.doc,'deleted'));
+  document.querySelectorAll('.restoreExam').forEach(b=>b.onclick=()=>changeExamState(b.dataset.doc,'active'));
+  document.querySelectorAll('.permanentDeleteExam').forEach(b=>b.onclick=()=>permanentDeleteExam(b.dataset.doc,b.dataset.name));
+}
+async function changeExamState(docId,state){
+  const labels={archived:'Archive',deleted:'Recycle Bin',active:'Restore'};
+  if(!confirm(`${labels[state]} cheyyala?`))return;
+  try{await updateDoc(doc(db,'exams',docId),{status:state,archivedAt:state==='archived'?serverTimestamp():null,deletedAt:state==='deleted'?serverTimestamp():null,restoredAt:state==='active'?serverTimestamp():null});allSavedExams=[];await ensureExamsLoaded(true);renderSavedExams($('examSearch').value);flash(`Exam ${labels[state]} complete ✅`)}catch(e){show(e.message,'err')}
+}
+async function deleteMatchingDocs(collectionName,field,value){const snap=await getDocs(collection(db,collectionName));const refs=[];snap.forEach(d=>{const x=d.data();if(x[field]===value||d.id===value)refs.push(d.ref)});for(let i=0;i<refs.length;i+=450){const wb=writeBatch(db);refs.slice(i,i+450).forEach(r=>wb.delete(r));await wb.commit()}}
+async function permanentDeleteExam(docId,publicId){
+  const typed=prompt(`Permanent delete kosam Exam ID type cheyyandi:\n${publicId}`);
+  if(norm(typed)!==norm(publicId))return flash('Exam ID match avvaledu. Delete cancel.','err');
+  if(!confirm('Exam, Questions, Codes, Results permanently delete avutayi. Continue?'))return;
+  try{await deleteMatchingDocs('examQuestions','examId',docId);await deleteMatchingDocs('studentAccess','examId',docId);await deleteMatchingDocs('results','examId',docId);await deleteDoc(doc(db,'exams',docId));allSavedExams=[];await ensureExamsLoaded(true);renderSavedExams('');flash('Exam permanently deleted ✅')}catch(e){show(e.message,'err')}
 }

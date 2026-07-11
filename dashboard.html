@@ -16,7 +16,7 @@
 
 <section id="examPanel" class="adminWorkPanel" hidden>
 <button class="backHomeBtn" type="button">← Main Features</button>
-<div class="card"><h2>Create Daily Exam</h2><div class="grid two">
+<div class="card"><div class="sectionHeadRow"><div><h2>Create Daily Exam</h2><p class="small">Fresh exam form. Old exam data automatic ga load avvadu.</p></div><div class="action-row compact"><button type="button" class="gray" id="recoverDraftBtn">Recover Draft</button><button type="button" class="danger" id="clearExamFormBtn">Clear Form</button></div></div><div class="grid two">
 <div><label>Institute</label><select id="instituteId"></select><input id="instituteName" type="hidden"></div>
 <div><label>Batch</label><select id="batchId"></select></div>
 <div><label>Exam ID</label><input id="examId" placeholder="TEST-101"></div>
@@ -46,14 +46,14 @@
 
 <section id="savedPanel" class="adminWorkPanel" hidden>
 <button class="backHomeBtn" type="button">← Main Features</button>
-<div class="card"><h2>Saved Exams</h2><div class="exam-search-row"><input id="examSearch" placeholder="Search by Exam ID / Exam Name / Institute"><button id="searchExam">Search Exam</button><button id="loadAllExams" class="gray">Load All Exams</button></div><div id="savedExams"><p class="small">Search exam or press Load All Exams.</p></div></div>
+<div class="card"><h2>Saved Exams</h2><div class="examViewTabs"><button type="button" class="active examViewBtn" data-view="active">Active Exams</button><button type="button" class="gray examViewBtn" data-view="archived">Archive</button><button type="button" class="danger examViewBtn" data-view="deleted">Recycle Bin</button></div><div class="exam-search-row"><input id="examSearch" placeholder="Search by Exam ID / Exam Name / Institute"><button id="searchExam">Search Exam</button><button id="loadAllExams" class="gray">Load All Exams</button></div><div id="savedExams"><p class="small">Search exam or press Load All Exams.</p></div></div>
 </section>
 </div>
 <script>
 (function(){
  const home=document.getElementById('adminHome');
  const panels=[...document.querySelectorAll('.adminWorkPanel')];
- function openPanel(id){home.hidden=true;panels.forEach(p=>p.hidden=p.id!==id);window.scrollTo({top:0,behavior:'smooth'});}
+ function openPanel(id){home.hidden=true;panels.forEach(p=>p.hidden=p.id!==id);if(id==='examPanel')window.dispatchEvent(new CustomEvent('ksr:new-exam'));window.scrollTo({top:0,behavior:'smooth'});}
  document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>openPanel(b.dataset.open)));
  document.querySelectorAll('.backHomeBtn').forEach(b=>b.addEventListener('click',()=>{panels.forEach(p=>p.hidden=true);home.hidden=false;window.scrollTo({top:0,behavior:'smooth'});}));
 })();
