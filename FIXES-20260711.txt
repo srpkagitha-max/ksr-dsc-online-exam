@@ -1,0 +1,14 @@
+KSR EXAMOS FIX BUILD - 11 July 2026
+
+Included:
+1. Faster Admin Login page:
+   - Lightweight Firebase Auth-only loading
+   - Immediate loading message/spinner
+   - Persistent admin session
+   - Already logged-in admin opens Dashboard automatically
+   - Network timeout and clearer login errors
+2. Dashboard cache-busting for latest admin-daily.js and style.css.
+3. Results & Ranks matching fix already included in admin-daily.js.
+4. Existing exam save and student login flow retained.
+
+Upload all extracted files to the GitHub repository, replacing files with the same names.
