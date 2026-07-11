@@ -1,104 +1,11 @@
-<!doctype html>
-<html lang="te">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0b4b84">
-  <title>KSR Admin Login</title>
-  <link rel="stylesheet" href="style.css?v=20260711-FAST1">
-  <style>
-    .loginStatus{min-height:24px;margin:8px 0 12px;font-weight:800}
-    .loginStatus.ok{color:#08783e}.loginStatus.err{color:#c62828}.loginStatus.warn{color:#9a6700}
-    #login[disabled]{opacity:.72;cursor:wait}
-    .loginSpinner{display:none;width:18px;height:18px;border:3px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:ksrspin .7s linear infinite;margin-right:8px;vertical-align:middle}
-    #login.loading .loginSpinner{display:inline-block}@keyframes ksrspin{to{transform:rotate(360deg)}}
-  </style>
-</head>
-<body>
-  <div class="hero">
-    <h1>KSR DSC Enterprise</h1>
-    <p>Admin Login</p>
-    <div class="nav"><a class="btn gray" href="index.html">Student Login</a></div>
-  </div>
-  <div class="wrap">
-    <div class="card">
-      <h2>Admin Login</h2>
-      <div id="msg" class="loginStatus"></div>
-      <label>Email</label>
-      <input id="email" type="email" autocomplete="username" inputmode="email" placeholder="admin@gmail.com">
-      <label>Password</label>
-      <input id="pass" type="password" autocomplete="current-password" placeholder="Password">
-      <button id="login" type="button"><span class="loginSpinner"></span><span id="loginText">Login</span></button>
-    </div>
-  </div>
-
-  <script src="firebase-config.js?v=20260711-FAST1"></script>
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
-    import {
-      getAuth,
-      setPersistence,
-      browserLocalPersistence,
-      onAuthStateChanged,
-      signInWithEmailAndPassword
-    } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
-
-    const $ = id => document.getElementById(id);
-    const show = (text, type='') => { $('msg').className='loginStatus '+type; $('msg').textContent=text; };
-    const cfg = window.KSR_FIREBASE_CONFIG;
-
-    if (!cfg?.apiKey) {
-      show('Firebase configuration missing.', 'err');
-      $('login').disabled = true;
-      throw new Error('Firebase configuration missing');
-    }
-
-    const auth = getAuth(initializeApp(cfg));
-    let redirecting = false;
-
-    function goDashboard(){
-      if (redirecting) return;
-      redirecting = true;
-      show('Login successful. Dashboard opening…', 'ok');
-      location.replace('dashboard.html?v=20260711-FAST1');
-    }
-
-    await setPersistence(auth, browserLocalPersistence);
-
-    onAuthStateChanged(auth, user => {
-      if (user) goDashboard();
-    });
-
-    async function login(){
-      const email = $('email').value.trim();
-      const password = $('pass').value;
-      if (!email || !password) return show('Email and password enter cheyyandi.', 'err');
-
-      const button = $('login');
-      button.disabled = true;
-      button.classList.add('loading');
-      $('loginText').textContent = 'Opening…';
-      show('Checking login…', 'warn');
-
-      try {
-        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Network slow ga undi. Malli try cheyyandi.')), 15000));
-        await Promise.race([signInWithEmailAndPassword(auth, email, password), timeout]);
-        goDashboard();
-      } catch (error) {
-        const code = String(error?.code || '');
-        let message = error?.message || 'Login failed';
-        if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) message = 'Email లేదా password తప్పుగా ఉంది.';
-        else if (code.includes('too-many-requests')) message = 'Too many attempts. Konchem sepu tarvata try cheyyandi.';
-        else if (code.includes('network-request-failed')) message = 'Internet connection check cheyyandi.';
-        show(message, 'err');
-        button.disabled = false;
-        button.classList.remove('loading');
-        $('loginText').textContent = 'Login';
-      }
-    }
-
-    $('login').addEventListener('click', login);
-    ['email','pass'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') login(); }));
-  </script>
-</body>
-</html>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Login</title><link rel="stylesheet" href="style.css">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#064a86">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="KSR EXAMOS">
+<link rel="apple-touch-icon" href="./icon-192.png">
+</head><body><div class="hero"><h1>KSR DSC Enterprise V5.0</h1><p>Admin Login</p><div class="nav"><a class="btn gray" href="index.html">Student</a><a class="btn gray" href="create-admin.html">Create Admin</a></div></div><div class="wrap"><div class="card"><h2>Admin Login</h2><div id="msg"></div><label>Email</label><input id="email" placeholder="admin@gmail.com"><label>Password</label><input id="pass" type="password"><button id="login">Login</button></div></div><script type="module">import{auth,signInWithEmailAndPassword,$,show}from'./app.js';$('login').onclick=async()=>{try{await signInWithEmailAndPassword(auth,$('email').value.trim(),$('pass').value);location.href='dashboard.html'}catch(e){show(e.message,'err')}};</script>
+<script src="./pwa-register.js?v=20260712-1"></script>
+</body></html>

@@ -1,4 +1,12 @@
-<!doctype html><html lang="te"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Students & Contacts</title><link rel="stylesheet" href="style.css"></head><body class="adminHubBody">
+<!doctype html><html lang="te"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Students & Contacts</title><link rel="stylesheet" href="style.css">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#064a86">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="KSR EXAMOS">
+<link rel="apple-touch-icon" href="./icon-192.png">
+</head><body class="adminHubBody">
 <div class="adminTopbar"><div><h1>Students & Contacts</h1><p>Institute → Batch → Students</p></div><div class="adminTopActions"><a class="btn gray" href="dashboard.html">Dashboard</a><button class="gray" id="logout">Logout</button></div></div>
 <div class="wrap"><div id="msg"></div>
 <section class="card hierarchyCard">
@@ -31,4 +39,6 @@
   <div class="studentToolbar"><input id="contactSearch" placeholder="Search name / phone / exam / batch"><select id="contactInstitute"><option value="all">All Institutes</option></select><select id="contactBatch"><option value="all">All Batches</option></select></div>
   <div id="contactList"><p class="small">Contact List button nokkandi.</p></div>
 </section>
-</div><script type="module" src="master-data.js"></script></body></html>
+</div><script type="module" src="master-data.js"></script>
+<script src="./pwa-register.js?v=20260712-1"></script>
+</body></html>

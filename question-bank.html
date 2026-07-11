@@ -1,6 +1,16 @@
-<!doctype html><html lang="te"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Question Bank</title><link rel="stylesheet" href="style.css"></head><body class="adminHubBody">
+<!doctype html><html lang="te"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Question Bank</title><link rel="stylesheet" href="style.css">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#064a86">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="KSR EXAMOS">
+<link rel="apple-touch-icon" href="./icon-192.png">
+</head><body class="adminHubBody">
 <div class="adminTopbar"><div><h1>KSR Question Bank</h1><p>Subject → Class → Lesson wise questions</p></div><div class="adminTopActions"><a class="btn gray" href="dashboard.html">← Dashboard</a><button class="gray" id="logout">Logout</button></div></div>
 <div class="wrap"><div id="msg"></div>
 <section class="card"><h2>Save Questions to Folder</h2><div class="grid three"><div><label>Subject</label><input id="subject" placeholder="Psychology / Maths / Telugu"></div><div><label>Class / Exam Category</label><input id="className" placeholder="Class 8 / DSC / TET"></div><div><label>Lesson / Topic</label><input id="lesson" placeholder="Lesson 1 / Learning"></div></div><label>Paste Questions</label><textarea id="rawBits" class="bits-box" placeholder="1. Question text\nA) Option 1\nB) Option 2 ●\nC) Option 3\nD) Option 4"></textarea><div class="action-row"><button id="parseBtn">Parse & Preview</button><button class="green" id="saveBtn" disabled>Save Questions</button><button class="gray" id="clearBtn">Clear</button></div><div id="parseInfo" class="health-box"></div><div id="preview"></div></section>
 <section class="card"><h2>Browse Question Bank</h2><div class="grid three"><div><label>Subject</label><select id="filterSubject"><option value="">All Subjects</option></select></div><div><label>Class / Category</label><select id="filterClass"><option value="">All Classes</option></select></div><div><label>Lesson / Topic</label><select id="filterLesson"><option value="">All Lessons</option></select></div></div><div class="action-row"><button id="loadBtn">Load Questions</button><button class="danger" id="deleteSelectedBtn">Delete Selected</button></div><div id="stats" class="health-box"></div><div id="list"></div></section>
-</div><script type="module" src="question-bank.js"></script></body></html>
+</div><script type="module" src="question-bank.js"></script>
+<script src="./pwa-register.js?v=20260712-1"></script>
+</body></html>

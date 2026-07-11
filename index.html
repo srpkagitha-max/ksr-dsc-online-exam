@@ -6,6 +6,14 @@
   <meta name="theme-color" content="#061a42">
   <title>KSR Online Exams</title>
   <link rel="stylesheet" href="style.css">
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#064a86">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="KSR EXAMOS">
+<link rel="apple-touch-icon" href="./icon-192.png">
 </head>
 <body class="simpleStudentLogin">
   <header class="simpleLoginHeader">
@@ -126,5 +134,7 @@ $('startExam').onclick=async()=>{
   finally{setTimeout(()=>{btn.disabled=false;btn.classList.remove('loading','success');btn.querySelector('.btnText').textContent='START EXAM';},1200)}
 };
 </script>
+
+<script src="./pwa-register.js?v=20260712-1"></script>
 </body>
 </html>
