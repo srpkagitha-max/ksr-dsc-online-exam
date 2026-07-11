@@ -15,3 +15,5 @@ service cloud.firestore {
     }
   }
 }
+
+Question Bank collection: questionBank (admin signed-in read/write only)
