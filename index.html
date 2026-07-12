@@ -34,7 +34,7 @@
       </div>
 
       <label for="name">Student Name</label>
-      <input id="name" name="ksr_student_name" autocomplete="off" autocapitalize="words" placeholder="Enter your name">
+      <input id="name" autocomplete="name" placeholder="Enter your name">
 
       <label for="examId">Exam ID</label>
       <input id="examId" autocomplete="off" placeholder="Enter Exam ID">
@@ -44,7 +44,7 @@
       <input id="examCode" autocomplete="off" placeholder="Enter Exam Code">
 
       <label for="phone">Phone Number</label>
-      <input id="phone" name="ksr_student_phone" inputmode="numeric" autocomplete="off" placeholder="Enter 10-digit phone number">
+      <input id="phone" inputmode="numeric" autocomplete="tel" placeholder="Enter 10-digit phone number">
 
       <button id="startExam" class="simpleStartBtn">
         <span class="btnText">START EXAM</span><span class="btnArrow">→</span>
@@ -61,23 +61,23 @@
   </main>
 
 <script type="module">
-import{db,collection,getDocs,getDoc,doc,setDoc,serverTimestamp,$,show}from'./app.js';
+import{db,collection,getDocs,getDoc,doc,setDoc,serverTimestamp,query,where,$,show}from'./app.js';
 const norm=v=>String(v||'').trim().toUpperCase();
 const fmt=d=>{const x=Date.parse(d||'');return x?new Date(x).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}):'Not specified'};
 let previewExam=null;
 
 setTimeout(()=>document.getElementById('splash')?.classList.add('hideSplash'),1100);
-// Security: every time the student login opens, all fields must be blank.
 localStorage.removeItem('ksrLoginRemember');
-['name','examId','examCode','phone'].forEach(id=>{ if($(id)) $(id).value=''; });
 $('phone').addEventListener('input',()=>{$('phone').value=$('phone').value.replace(/\D/g,'').slice(0,10)});
 
 async function findExam(examPublicId){
   const directExam=await getDoc(doc(db,'exams',examPublicId));
   if(directExam.exists())return {docId:directExam.id,...directExam.data()};
-  let exam=null;const exams=await getDocs(collection(db,'exams'));
-  exams.forEach(d=>{const e=d.data();if(norm(e.examId||e.examCode)===examPublicId&&!exam)exam={docId:d.id,...e}});
-  return exam;
+  for(const field of ['examId','examCode']){
+    const snap=await getDocs(query(collection(db,'exams'),where(field,'==',examPublicId)));
+    if(!snap.empty){const d=snap.docs[0];return {docId:d.id,...d.data()};}
+  }
+  return null;
 }
 
 async function showExamPreview(){
@@ -120,7 +120,10 @@ $('startExam').onclick=async()=>{
     if(loginBefore&&now>loginBefore&&st&&now<st)return show('Login time ముగిసింది.','err');
     let access=null;const directAccess=await getDoc(doc(db,'studentAccess',code));
     if(directAccess.exists())access={id:directAccess.id,...directAccess.data()};
-    else{const accessSnap=await getDocs(collection(db,'studentAccess'));accessSnap.forEach(d=>{const a=d.data();if(a.examId===exam.docId&&norm(a.code)===code&&!access)access={id:d.id,...a}})}
+    else{
+      const accessSnap=await getDocs(query(collection(db,'studentAccess'),where('code','==',code)));
+      if(!accessSnap.empty){const d=accessSnap.docs[0];access={id:d.id,...d.data()};}
+    }
     if(!access||access.examId!==exam.docId)return show('Exam Code invalid. Group lo share chesina correct code enter cheyyandi.','err');
     if(access.assignedName&&norm(access.assignedName)!==norm(name))return show(`Ee code ${access.assignedName} ki assign chesaru. Mee peru correct ga enter cheyyandi.`,'err');
     if(access.status==='completed')return show('Ee Exam Code tho exam already completed.','err');
@@ -134,6 +137,6 @@ $('startExam').onclick=async()=>{
 };
 </script>
 
-<script src="./pwa-register.js?v=20260712-2"></script>
+<script src="./pwa-register.js?v=20260712-1"></script>
 </body>
 </html>

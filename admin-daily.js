@@ -32,6 +32,10 @@ let institutes = [];
 let batches = [];
 let batchStudents = [];
 
+let __draftTimer=null,__healthTimer=null;
+function scheduleDraftSave(){clearTimeout(__draftTimer);__draftTimer=setTimeout(saveDraft,350)}
+function scheduleHealth(){clearTimeout(__healthTimer);__healthTimer=setTimeout(renderHealth,120)}
+
 const norm = value =>
   String(value || '')
     .trim()
@@ -184,7 +188,7 @@ $('examId').addEventListener('input', () => {
   'qbLesson',
   'rawBits'
 ].forEach(id => {
-  $(id)?.addEventListener('input', saveDraft);
+  $(id)?.addEventListener('input', scheduleDraftSave);
 });
 
 async function loadMasters() {
@@ -259,34 +263,16 @@ function syncInstituteName() {
 
 async function loadBatchStudents() {
   const batchId = $('batchId').value;
-
   batchStudents = [];
-
-  if (!batchId) {
-    return;
-  }
-
+  if (!batchId) return;
   try {
-    const snapshot = await getDocs(collection(db, 'studentMaster'));
-
+    const snapshot = await getDocs(query(collection(db, 'studentMaster'), where('batchId', '==', batchId)));
     snapshot.forEach(documentSnapshot => {
       const data = documentSnapshot.data();
-
-      if (data.batchId === batchId && data.active !== false) {
-        batchStudents.push({
-          id: documentSnapshot.id,
-          ...data
-        });
-      }
+      if (data.active !== false) batchStudents.push({ id: documentSnapshot.id, ...data });
     });
-
-    batchStudents.sort((a, b) =>
-      String(a.name || '').localeCompare(String(b.name || ''))
-    );
-
-    if (batchStudents.length) {
-      $('codeCount').value = batchStudents.length;
-    }
+    batchStudents.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+    if (batchStudents.length) $('codeCount').value = batchStudents.length;
   } catch (error) {
     show('Students load avvaledu: ' + error.message, 'err');
   }
@@ -636,7 +622,7 @@ function sync() {
       element.value;
   });
 
-  saveDraft();
+  scheduleDraftSave();
 }
 
 function bindEditor() {
@@ -645,7 +631,7 @@ function bindEditor() {
     .forEach(element => {
       element.oninput = () => {
         sync();
-        renderHealth();
+        scheduleHealth();
       };
     });
 
