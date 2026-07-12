@@ -1,249 +1,141 @@
-const MARKS = /[●⚫✅✓✔]/g;
-const ROMAN_RE = /^(I|II|III|IV|V|VI|VII|VIII|IX|X)\s*[\.:\-\)]/i;
-const SMALL_ROMAN_RE = /^(i|ii|iii|iv|v|vi|vii|viii|ix|x)\s*[\.:\-\)]/;
-const NUMBERED_LIST_RE = /^\d{1,3}\s*[\.:\-\)]\s*\S+/;
-const PRAKATANA_RE = /^(ప్రకటన\s*\d+|Statement\s*\d+)\s*[:\.:\-]/i;
-const LIST_RE = /^(జాబితా\s*-?\s*[12I]+|List\s*-?\s*[12I]+)\s*[:\.:\-]?/i;
-const OPTION_RE = /^([A-D])\s*[\)\].:\-]\s*(.*)$/i;
-const QUESTION_START_RE = /^[\u200B\s]*(\d{1,4})\s*[\.)]\s*(.*)$/;
+const MARK_RE = /[●⚫✅✓✔]/;
+const MARKS_GLOBAL = /[●⚫✅✓✔]/g;
+const LETTER_OPTION_RE = /^([A-D])\s*[\)\.\:\-]\s*(.*)$/i;
+const NUMBER_OPTION_RE = /^([1-4])\s*[\)\.\:\-]\s*(.*)$/;
+const Q_PREFIX_RE = /^ప్రశ్న\s*(\d{1,4})\s*[\.:\-) ]*\s*(.*)$/i;
+const Q_NUMBER_RE = /^(\d{1,4})\s*[\.:\)]\s*(.*)$/;
+const ROMAN_RE = /^(?:I|II|III|IV|V|VI|VII|VIII|IX|X|i|ii|iii|iv|v|vi|vii|viii|ix|x)\s*[\)\.\:\-]\s*/;
+const LIST_HEADER_RE = /^(?:జాబితా|List)\s*[–—\-:]?\s*(?:I{1,3}|1|2)\b/i;
+const IGNORE_LINE_RE = /^(?:daily\s*test|dialy\s*test|డైలీ\s*టెస్ట్)\s*$/i;
 
 export function parseQuestions(raw, defaultSubject='General'){
-  raw = normalizeRaw(raw);
-  if(!raw) return [];
+  const lines = normalizeLines(raw);
+  if(!lines.length) return [];
+  const blocks = splitQuestionBlocks(lines);
+  return blocks
+    .map((block,index)=>parseBlock(block,index,defaultSubject))
+    .filter(q=>q.question && q.options.filter(o=>o.text).length >= 2);
+}
 
-  const lines = raw
-    .split('\n')
-    .map(x => x.trim())
-    .filter(Boolean);
+function normalizeLines(raw){
+  let text = String(raw||'')
+    .replace(/\r/g,'')
+    .replace(/[\u200B\u200C\u200D\uFEFF]/g,'')
+    .replace(/[‐‑‒–—]/g,'-')
+    .replace(/\u00A0/g,' ');
 
-  const blocks = [];
-  let current = [];
+  // Put question prefixes and letter options on their own lines when copied inline.
+  text = text
+    .replace(/\s+(ప్రశ్న\s*\d{1,4}\s*[\.:])/gi,'\n$1')
+    .replace(/\s+([A-D]\s*[\)\:]\s*)/g,'\n$1');
 
+  return text.split('\n')
+    .map(line=>line.replace(/[ \t]+/g,' ').trim())
+    .filter(Boolean)
+    .filter(line=>!IGNORE_LINE_RE.test(line));
+}
+
+function questionStart(line){
+  let m=line.match(Q_PREFIX_RE);
+  if(m) return {number:Number(m[1]), text:m[2]||''};
+  m=line.match(Q_NUMBER_RE);
+  if(m) return {number:Number(m[1]), text:m[2]||''};
+  return null;
+}
+
+function optionProgress(lines){
+  const letters=new Set(), numbers=new Set();
   for(const line of lines){
-    const start = line.match(QUESTION_START_RE);
+    let m=line.match(LETTER_OPTION_RE); if(m) letters.add(m[1].toUpperCase());
+    m=line.match(NUMBER_OPTION_RE); if(m) numbers.add(m[1]);
+  }
+  return {letters:letters.size,numbers:numbers.size,complete:letters.size===4||numbers.size===4};
+}
 
-    if(start && current.length && shouldStartNewQuestion(current, Number(start[1]))){
-      blocks.push(current);
-      current = [line];
+function splitQuestionBlocks(lines){
+  const blocks=[]; let current=[]; let currentNumber=null;
+  for(const line of lines){
+    const start=questionStart(line);
+    if(!current.length){
+      if(start){ current=[line]; currentNumber=start.number; }
+      continue;
+    }
+    const progress=optionProgress(current);
+    // A new question is accepted only after the previous one has a full option set.
+    // This prevents List-II items 1.,2.,3.,4. from becoming fake questions.
+    if(start && progress.complete && (currentNumber===null || start.number>currentNumber)){
+      blocks.push(current); current=[line]; currentNumber=start.number;
     }else{
       current.push(line);
     }
   }
-
   if(current.length) blocks.push(current);
-
-  return blocks
-    .map((block, index) => parseBlock(block, index, defaultSubject))
-    .filter(q => q.question && q.options.some(o => o.text));
+  return blocks;
 }
 
-function shouldStartNewQuestion(currentLines, candidateNumber){
-  const first = currentLines.find(Boolean) || '';
-  const firstMatch = first.match(QUESTION_START_RE);
-  const currentNumber = firstMatch ? Number(firstMatch[1]) : null;
-  const optionCount = currentLines.filter(line => OPTION_RE.test(line)).length;
+function parseBlock(lines,index,defaultSubject){
+  const first=questionStart(lines[0]);
+  const body=[first?.text||lines[0],...lines.slice(1)].filter(Boolean);
+  const letterLines=body.filter(x=>LETTER_OPTION_RE.test(x));
+  const numberLines=body.filter(x=>NUMBER_OPTION_RE.test(x));
+  // Prefer A-D only when all four exist. Otherwise use 1-4 when all four exist.
+  const letterKeys=new Set(letterLines.map(x=>x.match(LETTER_OPTION_RE)[1].toUpperCase()));
+  const numberKeys=new Set(numberLines.map(x=>x.match(NUMBER_OPTION_RE)[1]));
+  const scheme=letterKeys.size===4?'letter':numberKeys.size===4?'number':letterKeys.size>=numberKeys.size?'letter':'number';
 
-  // A genuine next question normally comes after the previous question's options.
-  if(optionCount >= 2) return true;
+  const qLines=[]; const opts={A:'',B:'',C:'',D:''}; let answer=''; let currentOpt=null;
+  const mapNum={1:'A',2:'B',3:'C',4:'D'};
 
-  // Never split matching-list numbers such as 1., 2., 3., 4. inside a question.
-  if(currentNumber !== null && candidateNumber <= currentNumber) return false;
+  for(const original of body){
+    let line=original.trim(); if(!line) continue;
+    const answerLine=line.match(/^(?:Answer|Ans|Correct Answer|సమాధానం)\s*[:\-]\s*([A-D1-4])/i);
+    if(answerLine){ answer=toLetter(answerLine[1]); currentOpt=null; continue; }
 
-  // Without options, split only for an immediately sequential question number
-  // and only when the current block already has enough body text.
-  return currentNumber !== null &&
-    candidateNumber === currentNumber + 1 &&
-    currentLines.length >= 3 &&
-    !currentLines.some(line => LIST_RE.test(line));
-}
-
-function normalizeRaw(raw){
-  return String(raw || '')
-    .replace(/\r/g, '')
-    .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    // Put question numbers and option labels on separate lines when pasted continuously.
-    .replace(/(^|\s)(\d{1,4})\s*[\.)]\s+/g, '$1\n$2. ')
-    .replace(/\s+([A-D])\s*[\)\].:]\s*/g, '\n$1) ')
-    .replace(/\s+(జాబితా\s*-?\s*[12I]+\s*[:\.:]?)/g, '\n$1 ')
-    .replace(/\s+(List\s*-?\s*[12I]+\s*[:\.:]?)/gi, '\n$1 ')
-    .replace(/\s+(ప్రకటన\s*\d+\s*[:\.:\-])/g, '\n$1 ')
-    .replace(/\s+(Statement\s*\d+\s*[:\.:\-])/gi, '\n$1 ')
-    .replace(/\s+((?:I|II|III|IV|V|VI|VII|VIII|IX|X)\s*[\.:\)])\s+(?=[^0-9])/g, '\n$1 ')
-    .trim();
-}
-
-function cleanQuestionStart(text){
-  return text.replace(QUESTION_START_RE, (_, number, rest) => rest || '').trim();
-}
-
-function stripMarks(text){
-  return String(text || '')
-    .replace(MARKS, '')
-    .replace(/\s+\*\s*$/, '')
-    .trim();
-}
-
-function hasMark(text){
-  MARKS.lastIndex = 0;
-  const found = MARKS.test(text) || /\*\s*$/.test(text);
-  MARKS.lastIndex = 0;
-  return found;
-}
-
-function parseBlock(lines, index, defaultSubject){
-  const questionLines = [];
-  const options = {A:'', B:'', C:'', D:''};
-  let answer = '';
-  let currentOption = null;
-  let subject = defaultSubject || 'General';
-
-  lines.forEach((rawLine, lineIndex) => {
-    let line = rawLine.trim();
-    if(!line) return;
-
-    const subjectMatch =
-      line.match(/^\[?Subject\]?\s*[:\-]\s*(.+)$/i) ||
-      line.match(/^విషయం\s*[:\-]\s*(.+)$/i);
-
-    if(subjectMatch){
-      subject = subjectMatch[1].trim();
-      return;
+    let match = scheme==='letter' ? line.match(LETTER_OPTION_RE) : line.match(NUMBER_OPTION_RE);
+    if(match){
+      const key=scheme==='letter'?match[1].toUpperCase():mapNum[match[1]];
+      let text=match[2].trim();
+      if(MARK_RE.test(text)){answer=key;text=stripMarks(text);}
+      opts[key]=text; currentOpt=key; continue;
     }
 
-    const answerMatch = line.match(/^(Answer|Ans|Correct Answer|సమాధానం)\s*[:\-]\s*([A-D])/i);
-    if(answerMatch){
-      answer = answerMatch[2].toUpperCase();
-      return;
+    // Lines that resemble the other option style are question content (A/B statements or List-II 1-4).
+    const otherStyle = scheme==='letter' ? NUMBER_OPTION_RE.test(line) : LETTER_OPTION_RE.test(line);
+    if(currentOpt && !otherStyle && !isQuestionStructure(line)){
+      if(MARK_RE.test(line)) answer=currentOpt;
+      opts[currentOpt]+=(opts[currentOpt]?' ':'')+stripMarks(line);
+    }else{
+      currentOpt=null;
+      qLines.push(formatQuestionLine(stripMarks(line)));
     }
-
-    const optionMatch = line.match(OPTION_RE);
-    if(optionMatch){
-      currentOption = optionMatch[1].toUpperCase();
-      let text = optionMatch[2].trim();
-      if(hasMark(text)){
-        answer = currentOption;
-        text = stripMarks(text);
-      }
-      options[currentOption] = text;
-      return;
-    }
-
-    // Lines after an option belong to that option only when they are ordinary continuation text.
-    // Statements, lists and numbered matching items stay in the question body.
-    if(currentOption && !isQuestionBodyLine(line) && !QUESTION_START_RE.test(line)){
-      options[currentOption] += (options[currentOption] ? ' ' : '') + stripMarks(line);
-      return;
-    }
-
-    currentOption = null;
-    if(hasMark(line)) line = stripMarks(line);
-
-    const cleaned = lineIndex === 0 ? cleanQuestionStart(line) : line;
-    questionLines.push(formatQuestionLine(cleaned));
-  });
+  }
 
   return {
-    id: 'q' + Date.now() + index,
-    subject,
-    question: compactQuestion(questionLines),
-    options: ['A','B','C','D'].map(key => ({key, text: options[key] || ''})),
-    answer: answer || '',
-    marks: 1
-  };
-}
-
-function isQuestionBodyLine(line){
-  return ROMAN_RE.test(line) ||
-    SMALL_ROMAN_RE.test(line) ||
-    NUMBERED_LIST_RE.test(line) ||
-    PRAKATANA_RE.test(line) ||
-    LIST_RE.test(line) ||
-    /^పై\b/.test(line) ||
-    /^కింది\b/.test(line) ||
-    /^సరైన/.test(line);
-}
-
-function formatQuestionLine(line){
-  line = line.trim();
-  if(!line) return '';
-
-  if(
-    ROMAN_RE.test(line) ||
-    SMALL_ROMAN_RE.test(line) ||
-    NUMBERED_LIST_RE.test(line) ||
-    PRAKATANA_RE.test(line) ||
-    LIST_RE.test(line) ||
-    /^పై\b/.test(line) ||
-    /^కింది\b/.test(line) ||
-    /^సరైన/.test(line)
-  ) return '\n' + line;
-
-  return line;
-}
-
-function compactQuestion(lines){
-  return lines
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/[ \t]+\n/g, '\n')
-    .trim();
-}
-
-export function blankQuestion(subject='General'){
-  return {
-    id:'q' + Date.now(),
-    subject,
-    question:'',
-    options:[
-      {key:'A', text:''},
-      {key:'B', text:''},
-      {key:'C', text:''},
-      {key:'D', text:''}
-    ],
-    answer:'A',
+    id:`q${Date.now()}_${index}`,
+    subject:defaultSubject||'General',
+    question:compactQuestion(qLines),
+    options:['A','B','C','D'].map(key=>({key,text:opts[key]||''})),
+    answer:answer||'',
     marks:1
   };
 }
 
-export function studentShuffle(questions, seedText=''){
-  const bySubject = {};
-  questions.forEach(q => {
-    const subject = q.subject || 'General';
-    (bySubject[subject] ||= []).push(q);
-  });
-
-  const random = mulberry32(hash(seedText || 'KSR'));
-  let output = [];
-  Object.keys(bySubject).forEach(subject => {
-    output = output.concat(shuffle([...bySubject[subject]], random));
-  });
-  return output;
+function toLetter(value){const v=String(value).toUpperCase();return ({1:'A',2:'B',3:'C',4:'D'})[v]||v;}
+function stripMarks(text){return String(text||'').replace(MARKS_GLOBAL,'').replace(/\s+\*\s*$/,'').trim();}
+function isQuestionStructure(line){return ROMAN_RE.test(line)||LIST_HEADER_RE.test(line)||/^పై\s/.test(line)||/^(?:A|B)\s*[\.:]\s+/.test(line);}
+function formatQuestionLine(line){
+  if(ROMAN_RE.test(line)||LIST_HEADER_RE.test(line)||/^పై\s/.test(line)||/^(?:A|B)\s*[\.:]\s+/.test(line)) return '\n'+line;
+  return line;
 }
+function compactQuestion(lines){return lines.join('\n').replace(/\n{3,}/g,'\n\n').replace(/[ \t]+\n/g,'\n').trim();}
 
-function shuffle(array, random){
-  for(let i = array.length - 1; i > 0; i--){
-    const j = Math.floor(random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
+export function blankQuestion(subject='General'){
+  return {id:'q'+Date.now(),subject,question:'',options:[{key:'A',text:''},{key:'B',text:''},{key:'C',text:''},{key:'D',text:''}],answer:'A',marks:1};
 }
-
-function hash(text){
-  let h = 1779033703;
-  for(let i = 0; i < text.length; i++){
-    h = Math.imul(h ^ text.charCodeAt(i), 3432918353);
-    h = h << 13 | h >>> 19;
-  }
-  return h >>> 0;
+export function studentShuffle(questions,seedText=''){
+  const bySubject={};questions.forEach(q=>{const s=q.subject||'General';(bySubject[s]||=[]).push(q);});
+  const rnd=mulberry32(hash(seedText||'KSR'));let out=[];Object.keys(bySubject).forEach(s=>out=out.concat(shuffle([...bySubject[s]],rnd)));return out;
 }
-
-function mulberry32(seed){
-  return function(){
-    let t = seed += 0x6D2B79F5;
-    t = Math.imul(t ^ t >>> 15, t | 1);
-    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
+function shuffle(a,rnd){for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function hash(str){let h=1779033703;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return h>>>0;}
+function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
