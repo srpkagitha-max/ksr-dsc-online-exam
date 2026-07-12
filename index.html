@@ -34,7 +34,7 @@
       </div>
 
       <label for="name">Student Name</label>
-      <input id="name" autocomplete="name" placeholder="Enter your name">
+      <input id="name" name="ksr_student_name" autocomplete="off" autocapitalize="words" placeholder="Enter your name">
 
       <label for="examId">Exam ID</label>
       <input id="examId" autocomplete="off" placeholder="Enter Exam ID">
@@ -44,7 +44,7 @@
       <input id="examCode" autocomplete="off" placeholder="Enter Exam Code">
 
       <label for="phone">Phone Number</label>
-      <input id="phone" inputmode="numeric" autocomplete="tel" placeholder="Enter 10-digit phone number">
+      <input id="phone" name="ksr_student_phone" inputmode="numeric" autocomplete="off" placeholder="Enter 10-digit phone number">
 
       <button id="startExam" class="simpleStartBtn">
         <span class="btnText">START EXAM</span><span class="btnArrow">→</span>
@@ -67,9 +67,9 @@ const fmt=d=>{const x=Date.parse(d||'');return x?new Date(x).toLocaleString('en-
 let previewExam=null;
 
 setTimeout(()=>document.getElementById('splash')?.classList.add('hideSplash'),1100);
-const saved=JSON.parse(localStorage.getItem('ksrLoginRemember')||'{}');
-if(saved.name)$('name').value=saved.name;
-if(saved.phone)$('phone').value=saved.phone;
+// Security: every time the student login opens, all fields must be blank.
+localStorage.removeItem('ksrLoginRemember');
+['name','examId','examCode','phone'].forEach(id=>{ if($(id)) $(id).value=''; });
 $('phone').addEventListener('input',()=>{$('phone').value=$('phone').value.replace(/\D/g,'').slice(0,10)});
 
 async function findExam(examPublicId){
@@ -126,7 +126,6 @@ $('startExam').onclick=async()=>{
     if(access.status==='completed')return show('Ee Exam Code tho exam already completed.','err');
     if(access.status==='inProgress'&&access.mobile&&access.mobile!==phone)return show('Ee code vere student use chestunnaru.','err');
     await setDoc(doc(db,'studentAccess',access.id),{...access,studentName:name,mobile:phone,hallTicket:phone,status:'inProgress',startedAt:access.startedAt||serverTimestamp()},{merge:true});
-    localStorage.setItem('ksrLoginRemember',JSON.stringify({name,phone}));
     localStorage.setItem('ksrStudent',JSON.stringify({name,phone,examId:examPublicId,code}));
     btn.querySelector('.btnText').textContent='SUCCESS ✓';btn.classList.add('success');
     setTimeout(()=>location.href=`exam.html?id=${encodeURIComponent(exam.docId)}&access=${encodeURIComponent(access.id)}&studentCode=${encodeURIComponent(code)}`,350);
@@ -135,6 +134,6 @@ $('startExam').onclick=async()=>{
 };
 </script>
 
-<script src="./pwa-register.js?v=20260712-1"></script>
+<script src="./pwa-register.js?v=20260712-2"></script>
 </body>
 </html>
