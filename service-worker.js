@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ksr-examos-shell-v2-performance-20260712';
+const CACHE_NAME = 'ksr-examos-shell-v2-1-loginfix-20260713';
 const APP_SHELL = [
   './', './index.html', './login.html', './style.css', './manifest.json',
   './icon-192.png', './icon-512.png', './offline.html'

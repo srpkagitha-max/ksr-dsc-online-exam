@@ -1,11 +1,106 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Login</title><link rel="stylesheet" href="style.css">
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#064a86">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="KSR EXAMOS">
-<link rel="apple-touch-icon" href="./icon-192.png">
-</head><body><div class="hero"><h1>KSR DSC Enterprise V5.0</h1><p>Admin Login</p><div class="nav"><a class="btn gray" href="index.html">Student</a><a class="btn gray" href="create-admin.html">Create Admin</a></div></div><div class="wrap"><div class="card"><h2>Admin Login</h2><div id="msg"></div><label>Email</label><input id="email" placeholder="admin@gmail.com"><label>Password</label><input id="pass" type="password"><button id="login">Login</button></div></div><script type="module">import{auth,signInWithEmailAndPassword,$,show}from'./app.js';$('login').onclick=async()=>{try{await signInWithEmailAndPassword(auth,$('email').value.trim(),$('pass').value);location.href='dashboard.html'}catch(e){show(e.message,'err')}};</script>
-<script src="./pwa-register.js?v=20260712-1"></script>
-</body></html>
+<!doctype html>
+<html lang="te">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>KSR EXAMOS Admin Login</title>
+  <link rel="stylesheet" href="./style.css?v=20260713-LOGIN2">
+  <link rel="manifest" href="./manifest.json?v=20260713-LOGIN2">
+  <meta name="theme-color" content="#064a86">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="KSR EXAMOS">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+</head>
+<body>
+  <div class="hero">
+    <h1>KSR EXAMOS</h1>
+    <p>Administrator Login</p>
+    <div class="nav">
+      <a class="btn gray" href="./index.html">Student Login</a>
+      <a class="btn gray" href="./create-admin.html">Create Admin</a>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <h2>Admin Login</h2>
+      <div id="msg"></div>
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" placeholder="admin@gmail.com">
+      <label for="pass">Password</label>
+      <input id="pass" type="password" autocomplete="current-password" placeholder="Enter password">
+      <button id="login" type="button">Login</button>
+      <p id="loginStatus" class="small"></p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
+    import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
+    import './firebase-config.js?v=20260713-LOGIN2';
+
+    const $ = id => document.getElementById(id);
+    const msg = $('msg');
+    const status = $('loginStatus');
+    const button = $('login');
+
+    function show(text, type = 'err') {
+      msg.className = `msg ${type === 'ok' ? 'ok' : type === 'warn' ? 'warn' : 'err'}`;
+      msg.textContent = text;
+    }
+
+    async function loginAdmin() {
+      const email = $('email').value.trim().toLowerCase();
+      const password = $('pass').value;
+
+      if (!email) {
+        show('Admin email enter cheyyandi.');
+        $('email').focus();
+        return;
+      }
+      if (!password) {
+        show('Admin password enter cheyyandi.');
+        $('pass').focus();
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = 'Logging in...';
+      status.textContent = 'Firebase connect avutondi...';
+      msg.textContent = '';
+
+      try {
+        const cfg = window.KSR_FIREBASE_CONFIG;
+        if (!cfg || !cfg.apiKey) throw new Error('Firebase configuration missing');
+        const app = getApps().length ? getApp() : initializeApp(cfg);
+        const auth = getAuth(app);
+        await setPersistence(auth, browserLocalPersistence);
+        await signInWithEmailAndPassword(auth, email, password);
+        show('Login successful ✅', 'ok');
+        status.textContent = 'Dashboard open avutondi...';
+        window.location.replace('./dashboard.html?v=20260713-LOGIN2');
+      } catch (error) {
+        console.error('KSR admin login error:', error);
+        const code = error?.code || '';
+        let text = 'Login avvaledu. Email/password check cheyyandi.';
+        if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') text = 'Email లేదా password తప్పుగా ఉంది.';
+        else if (code === 'auth/invalid-email') text = 'Valid email address enter cheyyandi.';
+        else if (code === 'auth/network-request-failed') text = 'Internet connection check cheyyandi.';
+        else if (code === 'auth/too-many-requests') text = 'Chala attempts ayyayi. Konchem sepu tarvata try cheyyandi.';
+        else if (error?.message) text = error.message;
+        show(text, 'err');
+        status.textContent = '';
+        button.disabled = false;
+        button.textContent = 'Login';
+      }
+    }
+
+    button.addEventListener('click', loginAdmin);
+    $('email').addEventListener('keydown', e => { if (e.key === 'Enter') $('pass').focus(); });
+    $('pass').addEventListener('keydown', e => { if (e.key === 'Enter') loginAdmin(); });
+  </script>
+  <script src="./pwa-register.js?v=20260713-LOGIN2"></script>
+</body>
+</html>

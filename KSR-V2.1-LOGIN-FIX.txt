@@ -1,0 +1,6 @@
+KSR EXAMOS v2.1 Login Fix
+- Admin login uses direct Firebase Auth imports.
+- Added local auth persistence.
+- Added visible loading and error messages.
+- Updated service-worker/cache version.
+- Removed old nested ZIP from project.
