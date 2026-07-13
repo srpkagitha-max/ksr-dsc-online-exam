@@ -13,6 +13,8 @@ import {
   deleteDoc,
   serverTimestamp,
   writeBatch,
+  query,
+  where,
   $,
   show,
   esc

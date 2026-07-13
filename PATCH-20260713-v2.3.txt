@@ -1,0 +1,9 @@
+KSR EXAMOS v2.3 combined patch
+
+Fixed:
+1. Dashboard Students load: query is not defined (query/where imports added).
+2. Parser accepts numbering restarts, duplicate numbering, A-D/(A-D)/a-d and 1-4 options.
+3. Correct markers: ● ⚫ ✅ ✓ ✔ ★ *
+4. Dashboard and PWA cache version bumped.
+
+After upload: close app/browser, reopen, Clear Form, paste questions again.
