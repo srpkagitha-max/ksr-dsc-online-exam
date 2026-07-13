@@ -1,7 +1,7 @@
-const MARK_RE = /[●⚫✅✓✔]/;
-const MARKS_GLOBAL = /[●⚫✅✓✔]/g;
-const LETTER_OPTION_RE = /^([A-D])\s*[\)\.\:\-]\s*(.*)$/i;
-const NUMBER_OPTION_RE = /^([1-4])\s*[\)\.\:\-]\s*(.*)$/;
+const MARK_RE = /[●⚫✅✓✔★*]/;
+const MARKS_GLOBAL = /[●⚫✅✓✔★*]/g;
+const LETTER_OPTION_RE = /^\(?([A-D])\)?\s*[\)\.\:\-]?\s+(.*)$/i;
+const NUMBER_OPTION_RE = /^\(?([1-4])\)?\s*[\)\.\:\-]?\s+(.*)$/;
 const Q_PREFIX_RE = /^ప్రశ్న\s*(\d{1,4})\s*[\.:\-) ]*\s*(.*)$/i;
 const Q_NUMBER_RE = /^(\d{1,4})\s*[\.:\)]\s*(.*)$/;
 const ROMAN_RE = /^(?:I|II|III|IV|V|VI|VII|VIII|IX|X|i|ii|iii|iv|v|vi|vii|viii|ix|x)\s*[\)\.\:\-]\s*/;
@@ -63,7 +63,10 @@ function splitQuestionBlocks(lines){
     const progress=optionProgress(current);
     // A new question is accepted only after the previous one has a full option set.
     // This prevents List-II items 1.,2.,3.,4. from becoming fake questions.
-    if(start && progress.complete && (currentNumber===null || start.number>currentNumber)){
+    if(start && progress.complete){
+      // Start a new block whenever the previous block already has all 4 options.
+      // Do not require increasing question numbers: users often paste multiple
+      // subjects where numbering restarts from 1, and duplicate numbers are valid.
       blocks.push(current); current=[line]; currentNumber=start.number;
     }else{
       current.push(line);
