@@ -1,0 +1,9 @@
+KSR EXAMOS v2.4 Student Code Mapping Fix
+
+- parser.js is intentionally NOT included in the patch ZIP.
+- Institute change clears old batch students.
+- Batch change reloads only selected batch active students.
+- Institute/batch relation is verified before exam save.
+- Active student count shown automatically.
+- Default 10 extra backup codes generated.
+- Backup codes are not locked to a student name.

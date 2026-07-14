@@ -77,14 +77,19 @@ onAuthStateChanged(auth, u => {
 
 $('logout').onclick = () => signOut(auth);
 
-$('instituteId').onchange = () => {
+$('instituteId').onchange = async () => {
+  batchStudents = [];
   renderBatchOptions();
   syncInstituteName();
+  updateCodeCount();
+  await loadBatchStudents();
   saveDraft();
 };
 
-$('batchId').onchange = () => {
-  loadBatchStudents();
+$('batchId').onchange = async () => {
+  batchStudents = [];
+  updateCodeCount();
+  await loadBatchStudents();
   saveDraft();
 };
 
@@ -123,9 +128,8 @@ function clearCreateForm(showNotice = true) {
     }
   });
 
-  if ($('codeCount')) {
-    $('codeCount').value = '50';
-  }
+  if ($('backupCodeCount')) $('backupCodeCount').value = '10';
+  updateCodeCount();
 
   if ($('secondsPerQuestion')) {
     $('secondsPerQuestion').value = '60';
@@ -179,7 +183,6 @@ $('examId').addEventListener('input', () => {
 
 [
   'examTitle',
-  'codeCount',
   'startTime',
   'endTime',
   'loginBefore',
@@ -191,6 +194,10 @@ $('examId').addEventListener('input', () => {
   'rawBits'
 ].forEach(id => {
   $(id)?.addEventListener('input', scheduleDraftSave);
+});
+$('backupCodeCount')?.addEventListener('input', () => {
+  updateCodeCount();
+  scheduleDraftSave();
 });
 
 async function loadMasters() {
@@ -253,6 +260,15 @@ function renderBatchOptions() {
         )}</option>`
     )
     .join('');
+  batchStudents = [];
+  updateCodeCount();
+}
+
+function updateCodeCount(){
+  const activeCount = batchStudents.length;
+  const backupCount = Math.max(0, Math.min(100, Number($('backupCodeCount')?.value || 10)));
+  if ($('activeStudentCount')) $('activeStudentCount').value = activeCount;
+  if ($('codeCount')) $('codeCount').value = activeCount + backupCount;
 }
 
 function syncInstituteName() {
@@ -264,18 +280,23 @@ function syncInstituteName() {
 }
 
 async function loadBatchStudents() {
+  const instituteId = $('instituteId').value;
   const batchId = $('batchId').value;
   batchStudents = [];
-  if (!batchId) return;
+  updateCodeCount();
+  if (!instituteId || !batchId) return;
   try {
     const snapshot = await getDocs(query(collection(db, 'studentMaster'), where('batchId', '==', batchId)));
     snapshot.forEach(documentSnapshot => {
       const data = documentSnapshot.data();
-      if (data.active !== false) batchStudents.push({ id: documentSnapshot.id, ...data });
+      const sameInstitute = !data.instituteId || data.instituteId === instituteId;
+      if (sameInstitute && data.active !== false) batchStudents.push({ id: documentSnapshot.id, ...data });
     });
     batchStudents.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
-    if (batchStudents.length) $('codeCount').value = batchStudents.length;
+    updateCodeCount();
+    flash(`${batchStudents.length} active students loaded + ${Number($('backupCodeCount')?.value || 10)} backup codes`);
   } catch (error) {
+    updateCodeCount();
     show('Students load avvaledu: ' + error.message, 'err');
   }
 }
@@ -292,6 +313,7 @@ function saveDraft() {
         examId: $('examId')?.value,
         examTitle: $('examTitle')?.value,
         codeCount: $('codeCount')?.value,
+        backupCodeCount: $('backupCodeCount')?.value,
         startTime: $('startTime')?.value,
         endTime: $('endTime')?.value,
         loginBefore: $('loginBefore')?.value,
@@ -326,7 +348,7 @@ function restoreDraft(notify = true) {
     [
       'examId',
       'examTitle',
-      'codeCount',
+      'backupCodeCount',
       'startTime',
       'endTime',
       'loginBefore',
@@ -1135,13 +1157,11 @@ $('saveGenerateBtn').onclick = async () => {
     Number($('secondsPerQuestion').value || 60)
   );
 
-  const count = Math.max(
-    1,
-    Math.min(
-      1000,
-      Number($('codeCount').value || 1)
-    )
+  const backupCount = Math.max(
+    0,
+    Math.min(100, Number($('backupCodeCount')?.value || 10))
   );
+  const count = Math.min(1000, batchStudents.length + backupCount);
 
   const issues = validate();
 
@@ -1171,6 +1191,18 @@ $('saveGenerateBtn').onclick = async () => {
       'Questions lo issues fix cheyyandi.',
       'err'
     );
+  }
+
+  const selectedBatch = batches.find(batch => batch.id === batchId);
+  if (!selectedBatch || selectedBatch.instituteId !== instituteId) {
+    return show('Selected Batch ee Institute ki sambandhinchindi kaadu. Institute/Batch malli select cheyyandi.', 'err');
+  }
+
+  await loadBatchStudents();
+  const freshBatchId = $('batchId').value;
+  const freshInstituteId = $('instituteId').value;
+  if (freshBatchId !== batchId || freshInstituteId !== instituteId) {
+    return show('Institute/Batch selection marindi. Malli Save + Generate Codes nokkandi.', 'err');
   }
 
   $('saveGenerateBtn').disabled = true;
@@ -1301,15 +1333,13 @@ $('saveGenerateBtn').onclick = async () => {
 
     lastCodes = [];
 
-    let selectedStudents = batchStudents.length
-      ? batchStudents.slice(0, count)
-      : [];
-
-    while (selectedStudents.length < count) {
+    const selectedStudents = batchStudents.map(student => ({ ...student, isBackup: false }));
+    for (let i = 0; i < backupCount; i++) {
       selectedStudents.push({
-        name: '',
+        name: `Backup-${String(i + 1).padStart(2, '0')}`,
         roll: '',
-        id: ''
+        id: '',
+        isBackup: true
       });
     }
 
@@ -1352,7 +1382,7 @@ $('saveGenerateBtn').onclick = async () => {
             student.id || '',
 
           assignedName:
-            student.name || '',
+            student.isBackup ? '' : (student.name || ''),
 
           studentName: '',
 
@@ -1364,6 +1394,7 @@ $('saveGenerateBtn').onclick = async () => {
           status: 'unused',
 
           mobile: '',
+          isBackup: Boolean(student.isBackup),
 
           createdAt: serverTimestamp()
         });
@@ -1374,7 +1405,7 @@ $('saveGenerateBtn').onclick = async () => {
           status: 'unused',
 
           studentName:
-            student.name || '',
+            student.isBackup ? `Backup-${String(index - batchStudents.length + 1).padStart(2, '0')}` : (student.name || ''),
 
           roll:
             student.roll || ''

@@ -30,7 +30,9 @@
 <div><label>Batch</label><select id="batchId"></select></div>
 <div><label>Exam ID</label><input id="examId" placeholder="TEST-101"></div>
 <div><label>Exam Name (optional)</label><input id="examTitle" placeholder="Daily Grand Test"></div>
-<div><label>Number of Students / Codes</label><input id="codeCount" type="number" min="1" max="1000" value="50"></div>
+<div><label>Active Students</label><input id="activeStudentCount" type="number" value="0" readonly></div>
+<div><label>Extra Backup Codes</label><input id="backupCodeCount" type="number" min="0" max="100" value="10"></div>
+<div><label>Total Codes</label><input id="codeCount" type="number" min="1" max="1000" value="10" readonly></div>
 <div><label>Start Time</label><input id="startTime" type="datetime-local"></div>
 <div><label>End Time</label><input id="endTime" type="datetime-local"></div>
 <div><label>Login Before Time</label><input id="loginBefore" type="datetime-local"></div>
@@ -71,6 +73,6 @@
  document.querySelectorAll('.backHomeBtn').forEach(b=>b.addEventListener('click',()=>{panels.forEach(p=>p.hidden=true);home.hidden=false;window.scrollTo({top:0,behavior:'smooth'});}));
 })();
 </script>
-<script type="module" src="admin-daily.js?v=20260713-4"></script>
-<script src="./pwa-register.js?v=20260713-4"></script>
+<script type="module" src="admin-daily.js?v=20260714-v24"></script>
+<script src="./pwa-register.js?v=20260714-v24"></script>
 </body></html>
