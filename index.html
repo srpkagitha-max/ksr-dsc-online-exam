@@ -46,7 +46,7 @@
       <label for="phone">Phone Number</label>
       <input id="phone" inputmode="numeric" autocomplete="tel" placeholder="Enter 10-digit phone number">
 
-      <button id="startExam" class="simpleStartBtn">
+      <button id="startExam" type="button" class="simpleStartBtn">
         <span class="btnText">START EXAM</span><span class="btnArrow">→</span>
       </button>
 
@@ -61,82 +61,88 @@
   </main>
 
 <script type="module">
-import{db,collection,getDocs,getDoc,doc,setDoc,serverTimestamp,query,where,$,show}from'./app.js';
+import{db,collection,getDocs,getDoc,doc,setDoc,serverTimestamp,query,where,$}from'./app.js?v=20260714-3';
 const norm=v=>String(v||'').trim().toUpperCase();
-const fmt=d=>{const x=Date.parse(d||'');return x?new Date(x).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}):'Not specified'};
-let previewExam=null;
-
-setTimeout(()=>document.getElementById('splash')?.classList.add('hideSplash'),1100);
+const message=(text,type='err')=>{
+  const box=$('msg');
+  if(box){box.className=`msg ${type}`;box.textContent=text;box.scrollIntoView({behavior:'smooth',block:'center'});}
+};
+const fmt=d=>{const x=Date.parse(d||'');return Number.isNaN(x)?'Not specified':new Date(x).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})};
+let previewExam=null,busy=false;
 localStorage.removeItem('ksrLoginRemember');
 $('phone').addEventListener('input',()=>{$('phone').value=$('phone').value.replace(/\D/g,'').slice(0,10)});
 
-async function findExam(examPublicId){
-  const directExam=await getDoc(doc(db,'exams',examPublicId));
-  if(directExam.exists())return {docId:directExam.id,...directExam.data()};
+async function findExam(publicId){
+  const id=norm(publicId);
+  if(!id)return null;
+  const direct=await getDoc(doc(db,'exams',id));
+  if(direct.exists())return {docId:direct.id,...direct.data()};
   for(const field of ['examId','examCode']){
-    const snap=await getDocs(query(collection(db,'exams'),where(field,'==',examPublicId)));
+    const snap=await getDocs(query(collection(db,'exams'),where(field,'==',id)));
     if(!snap.empty){const d=snap.docs[0];return {docId:d.id,...d.data()};}
   }
   return null;
 }
 
+async function findAccess(code){
+  const clean=norm(code);
+  const direct=await getDoc(doc(db,'studentAccess',clean));
+  if(direct.exists())return {id:direct.id,...direct.data()};
+  const snap=await getDocs(query(collection(db,'studentAccess'),where('code','==',clean)));
+  if(!snap.empty){const d=snap.docs[0];return {id:d.id,...d.data()};}
+  return null;
+}
+
 async function showExamPreview(){
-  const examPublicId=norm($('examId').value);const box=$('examPreview');
-  previewExam=null;if(!examPublicId){box.classList.add('hidden');box.innerHTML='';return;}
+  const examPublicId=norm($('examId').value),box=$('examPreview');
+  previewExam=null;
+  if(!examPublicId){box.classList.add('hidden');box.innerHTML='';return;}
   box.classList.remove('hidden');box.innerHTML='<div class="verifyLoading">Checking exam details…</div>';
   try{
     const exam=await findExam(examPublicId);
     if(!exam){box.innerHTML='<div class="verifyError">⚠ Exam ID not found</div>';return;}
     previewExam=exam;
-    const qCount=Array.isArray(exam.questions)?exam.questions.length:(Number(exam.questionCount)||'—');
-    const totalMins=exam.secondsPerQuestion&&Number(qCount)?Math.ceil((exam.secondsPerQuestion*Number(qCount))/60):(exam.durationMinutes||'—');
+    const qCount=Number(exam.questionCount)||'—';
     const now=Date.now(),st=Date.parse(exam.startTime||exam.start||''),en=Date.parse(exam.endTime||exam.end||'');
     const status=st&&now<st?'UPCOMING':en&&now>en?'CLOSED':'LIVE';
-    box.innerHTML=`<div class="verifyHead"><b>✓ Exam Verified</b><span class="examStatus ${status.toLowerCase()}">${status}</span></div>
-      <div class="verifyGrid"><div><span>Institute</span><b>${exam.instituteName||exam.institute||'KSR Online Exams'}</b></div>
-      <div><span>Batch</span><b>${exam.batchName||'Open Batch'}</b></div>
-      <div><span>Exam</span><b>${exam.title||exam.examTitle||examPublicId}</b></div>
-      <div><span>Start</span><b>${fmt(exam.startTime||exam.start)}</b></div>
-      <div><span>Questions</span><b>${qCount}</b></div><div><span>Time</span><b>${totalMins==='—'?'—':totalMins+' min'}</b></div></div>`;
-  }catch(e){box.innerHTML='<div class="verifyError">Unable to verify now. You can still continue.</div>';}
+    box.innerHTML=`<div class="verifyHead"><b>✓ Exam Verified</b><span class="examStatus ${status.toLowerCase()}">${status}</span></div><div class="verifyGrid"><div><span>Institute</span><b>${exam.instituteName||'KSR Online Exams'}</b></div><div><span>Batch</span><b>${exam.batchName||'Open Batch'}</b></div><div><span>Exam</span><b>${exam.title||examPublicId}</b></div><div><span>Start</span><b>${fmt(exam.startTime||exam.start)}</b></div><div><span>Questions</span><b>${qCount}</b></div></div>`;
+  }catch(error){console.error(error);box.innerHTML='<div class="verifyError">Exam verify avvaledu. Internet check cheyyandi.</div>';}
 }
 $('examId').addEventListener('blur',showExamPreview);
 $('examId').addEventListener('change',showExamPreview);
 
-const inputs=[$('name'),$('examId'),$('examCode'),$('phone')];
-inputs.forEach((el,i)=>el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(i<inputs.length-1)inputs[i+1].focus();else $('startExam').click();}}));
-
-$('startExam').onclick=async()=>{
+async function startExam(){
+  if(busy)return;
   const name=$('name').value.trim(),examPublicId=norm($('examId').value),code=norm($('examCode').value),phone=$('phone').value.trim();
-  if(!name||!examPublicId||!code||!/^[6-9]\d{9}$/.test(phone))return show('Name, valid Exam ID, Exam Code, 10 digit phone number enter cheyyandi.','err');
-  const btn=$('startExam');btn.disabled=true;btn.classList.add('loading');btn.querySelector('.btnText').textContent='VERIFYING...';
+  if(!name||!examPublicId||!code||!/^[6-9]\d{9}$/.test(phone))return message('Name, Exam ID, Exam Code, valid 10-digit phone number enter cheyyandi.');
+  busy=true;
+  const btn=$('startExam'),label=btn.querySelector('.btnText');
+  btn.disabled=true;label.textContent='VERIFYING...';message('Exam details verify chestunnam…','warn');
   try{
     const exam=previewExam&&norm(previewExam.examId||previewExam.examCode||previewExam.docId)===examPublicId?previewExam:await findExam(examPublicId);
-    if(!exam)return show('Exam ID dorakaledu. Correct Exam ID enter cheyyandi.','err');
-    const now=Date.now(),st=Date.parse(exam.startTime||exam.start||''),en=Date.parse(exam.endTime||exam.end||''),loginBefore=Date.parse(exam.loginBefore||exam.startTime||'');
-    if(exam.status!=='active')return show('Ee exam active ga ledu.','err');
-    if(st&&now<st)return show('Exam ఇంకా ప్రారంభం కాలేదు.','warn');
-    if(en&&now>en)return show('Exam ముగిసింది.','err');
-    if(loginBefore&&now>loginBefore&&st&&now<st)return show('Login time ముగిసింది.','err');
-    let access=null;const directAccess=await getDoc(doc(db,'studentAccess',code));
-    if(directAccess.exists())access={id:directAccess.id,...directAccess.data()};
-    else{
-      const accessSnap=await getDocs(query(collection(db,'studentAccess'),where('code','==',code)));
-      if(!accessSnap.empty){const d=accessSnap.docs[0];access={id:d.id,...d.data()};}
-    }
-    if(!access||access.examId!==exam.docId)return show('Exam Code invalid. Group lo share chesina correct code enter cheyyandi.','err');
-    if(access.assignedName&&norm(access.assignedName)!==norm(name))return show(`Ee code ${access.assignedName} ki assign chesaru. Mee peru correct ga enter cheyyandi.`,'err');
-    if(access.status==='completed')return show('Ee Exam Code tho exam already completed.','err');
-    if(access.status==='inProgress'&&access.mobile&&access.mobile!==phone)return show('Ee code vere student use chestunnaru.','err');
-    await setDoc(doc(db,'studentAccess',access.id),{...access,studentName:name,mobile:phone,hallTicket:phone,status:'inProgress',startedAt:access.startedAt||serverTimestamp()},{merge:true});
-    localStorage.setItem('ksrStudent',JSON.stringify({name,phone,examId:examPublicId,code}));
-    btn.querySelector('.btnText').textContent='SUCCESS ✓';btn.classList.add('success');
-    setTimeout(()=>location.href=`exam.html?id=${encodeURIComponent(exam.docId)}&access=${encodeURIComponent(access.id)}&studentCode=${encodeURIComponent(code)}`,350);
-  }catch(e){show(e.message,'err')}
-  finally{setTimeout(()=>{btn.disabled=false;btn.classList.remove('loading','success');btn.querySelector('.btnText').textContent='START EXAM';},1200)}
-};
+    if(!exam)throw new Error('Exam ID dorakaledu. Correct Exam ID enter cheyyandi.');
+    const status=String(exam.status||'active').toLowerCase();
+    const now=Date.now(),st=Date.parse(exam.startTime||exam.start||''),en=Date.parse(exam.endTime||exam.end||'');
+    if(status!=='active')throw new Error('Ee exam active ga ledu.');
+    if(st&&now<st)throw new Error('Exam ఇంకా ప్రారంభం కాలేదు.');
+    if(en&&now>en)throw new Error('Exam ముగిసింది.');
+    const access=await findAccess(code);
+    if(!access)throw new Error('Exam Code dorakaledu. Correct code enter cheyyandi.');
+    const accessExamId=norm(access.examId||access.examPublicId||'');
+    if(accessExamId!==norm(exam.docId)&&accessExamId!==examPublicId)throw new Error('Ee code ee Exam ID ki sambandhinchindi kaadu.');
+    if(access.assignedName&&norm(access.assignedName)!==norm(name))throw new Error(`Ee code ${access.assignedName} ki assign chesaru.`);
+    if(String(access.status).toLowerCase()==='completed')throw new Error('Ee code tho exam already completed. Backup code use cheyyandi.');
+    if(String(access.status).toLowerCase()==='inprogress'&&access.mobile&&access.mobile!==phone)throw new Error('Ee code vere phone lo use avutondi. Backup code use cheyyandi.');
+    await setDoc(doc(db,'studentAccess',access.id),{studentName:name,mobile:phone,hallTicket:phone,status:'inProgress',startedAt:access.startedAt||serverTimestamp()},{merge:true});
+    localStorage.setItem('ksrStudent',JSON.stringify({name,phone,examId:examPublicId,code,accessId:access.id}));
+    message('Login successful. Exam open avutondi…','ok');label.textContent='SUCCESS ✓';
+    location.href=`./exam.html?id=${encodeURIComponent(exam.docId)}&access=${encodeURIComponent(access.id)}&studentCode=${encodeURIComponent(code)}&v=20260714-3`;
+  }catch(error){console.error('Student login error',error);message(error?.message||'Exam open avvaledu. Internet check chesi malli try cheyyandi.');btn.disabled=false;label.textContent='START EXAM';busy=false;}
+}
+$('startExam').addEventListener('click',startExam);
+[$('name'),$('examId'),$('examCode'),$('phone')].forEach((el,i,arr)=>el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();i<arr.length-1?arr[i+1].focus():startExam();}}));
 </script>
 
-<script src="./pwa-register.js?v=20260712-1"></script>
+<script src="./pwa-register.js?v=20260714-3"></script>
 </body>
 </html>
