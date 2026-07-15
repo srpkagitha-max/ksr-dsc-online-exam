@@ -1,0 +1,14 @@
+KSR EXAMOS v2.6 Student Login Safe Fix
+
+Changes:
+- START EXAM click always shows visible progress/error message.
+- 12-second Firebase timeout with clear slow-internet message.
+- 6-digit code validation.
+- Works with code stored as string or number.
+- Compatible with examId/examPublicId/examCode fields.
+- Flexible student-name comparison (spaces, dots, hyphens ignored).
+- Named student can resume after accidental close, even from another phone.
+- Backup codes remain locked to the first phone after starting.
+- Online/offline status messages.
+- PWA cache version bumped so old Student Login code is removed.
+- Parser unchanged.

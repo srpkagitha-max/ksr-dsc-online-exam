@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ksr-examos-v2-5-answer-codes-20260715-1';
+const CACHE_NAME = 'ksr-examos-v2-6-student-login-safe-20260715-6';
 const APP_SHELL = [
   './', './index.html', './login.html', './style.css', './manifest.json',
   './icon-192.png', './icon-512.png', './offline.html'
