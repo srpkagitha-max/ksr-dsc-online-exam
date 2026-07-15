@@ -1,0 +1,8 @@
+KSR EXAMOS v2.5 - Answer Sheet + 6-Digit Codes
+
+1. Answer Sheet PDF black pages fix.
+2. Full question, A/B/C/D options, student answer and correct answer included.
+3. PDF page slices are forced to white background.
+4. Exam Codes are unique 6-digit numbers only.
+5. Named student codes + 10 backup codes continue to work.
+6. Parser.js was not changed.

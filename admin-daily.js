@@ -810,23 +810,32 @@ function renderPreview() {
   };
 }
 
-function makeCode(examId, index) {
-  const characters =
-    'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function randomSixDigitCode() {
+  return String(
+    Math.floor(100000 + Math.random() * 900000)
+  );
+}
 
-  let randomPart = '';
+async function makeUniqueSixDigitCode(usedCodes) {
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const code = randomSixDigitCode();
 
-  for (let i = 0; i < 6; i++) {
-    randomPart +=
-      characters[
-        Math.floor(Math.random() * characters.length)
-      ];
+    if (usedCodes.has(code)) {
+      continue;
+    }
+
+    const existing = await getDoc(
+      doc(db, 'studentAccess', code)
+    );
+
+    if (!existing.exists()) {
+      usedCodes.add(code);
+      return code;
+    }
   }
 
-  return (
-    `${examId}-` +
-    `${String(index + 1).padStart(3, '0')}-` +
-    `${randomPart}`
+  throw new Error(
+    'Unique 6-digit Exam Code generate avvaledu. Malli try cheyyandi.'
   );
 }
 
@@ -1343,6 +1352,15 @@ $('saveGenerateBtn').onclick = async () => {
       });
     }
 
+    const generatedCodes = [];
+    const usedCodes = new Set();
+
+    for (let index = 0; index < selectedStudents.length; index++) {
+      generatedCodes.push(
+        await makeUniqueSixDigitCode(usedCodes)
+      );
+    }
+
     for (
       let startIndex = 0;
       startIndex < selectedStudents.length;
@@ -1359,10 +1377,7 @@ $('saveGenerateBtn').onclick = async () => {
         const index =
           startIndex + chunkIndex;
 
-        const code = makeCode(
-          examPublicId,
-          index
-        );
+        const code = generatedCodes[index];
 
         const accessRef = doc(
           db,
