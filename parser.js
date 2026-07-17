@@ -1,6 +1,6 @@
 const MARK_RE = /[●⚫✅✓✔★*]/;
 const MARKS_GLOBAL = /[●⚫✅✓✔★*]/g;
-const LETTER_OPTION_RE = /^\(?([A-D])\)?\s*[\)\.\:\-]?\s+(.*)$/i;
+const LETTER_OPTION_RE = /^\(?([A-D]|ఎ|బి|సి|డి)\)?\s*[).:\-]?\s+(.*)$/iu;
 const NUMBER_OPTION_RE = /^\(?([1-4])\)?\s*[\)\.\:\-]?\s+(.*)$/;
 const Q_PREFIX_RE = /^ప్రశ్న\s*(\d{1,4})\s*[\.:\-) ]*\s*(.*)$/i;
 const Q_NUMBER_RE = /^(\d{1,4})\s*[\.:\)]\s*(.*)$/;
@@ -27,7 +27,7 @@ function normalizeLines(raw){
   // Put question prefixes and letter options on their own lines when copied inline.
   text = text
     .replace(/\s+(ప్రశ్న\s*\d{1,4}\s*[\.:])/gi,'\n$1')
-    .replace(/\s+([A-D]\s*[\)\:]\s*)/g,'\n$1');
+    .replace(/\s+((?:[A-D]|ఎ|బి|సి|డి)\s*[):]\s*)/giu,'\n$1');
 
   return text.split('\n')
     .map(line=>line.replace(/[ \t]+/g,' ').trim())
@@ -46,7 +46,7 @@ function questionStart(line){
 function optionProgress(lines){
   const letters=new Set(), numbers=new Set();
   for(const line of lines){
-    let m=line.match(LETTER_OPTION_RE); if(m) letters.add(m[1].toUpperCase());
+    let m=line.match(LETTER_OPTION_RE); if(m) letters.add(optionLetter(m[1]));
     m=line.match(NUMBER_OPTION_RE); if(m) numbers.add(m[1]);
   }
   return {letters:letters.size,numbers:numbers.size,complete:letters.size===4||numbers.size===4};
@@ -82,7 +82,7 @@ function parseBlock(lines,index,defaultSubject){
   const letterLines=body.filter(x=>LETTER_OPTION_RE.test(x));
   const numberLines=body.filter(x=>NUMBER_OPTION_RE.test(x));
   // Prefer A-D only when all four exist. Otherwise use 1-4 when all four exist.
-  const letterKeys=new Set(letterLines.map(x=>x.match(LETTER_OPTION_RE)[1].toUpperCase()));
+  const letterKeys=new Set(letterLines.map(x=>optionLetter(x.match(LETTER_OPTION_RE)[1])));
   const numberKeys=new Set(numberLines.map(x=>x.match(NUMBER_OPTION_RE)[1]));
   const scheme=letterKeys.size===4?'letter':numberKeys.size===4?'number':letterKeys.size>=numberKeys.size?'letter':'number';
 
@@ -96,7 +96,7 @@ function parseBlock(lines,index,defaultSubject){
 
     let match = scheme==='letter' ? line.match(LETTER_OPTION_RE) : line.match(NUMBER_OPTION_RE);
     if(match){
-      const key=scheme==='letter'?match[1].toUpperCase():mapNum[match[1]];
+      const key=scheme==='letter'?optionLetter(match[1]):mapNum[match[1]];
       let text=match[2].trim();
       if(MARK_RE.test(text)){answer=key;text=stripMarks(text);}
       opts[key]=text; currentOpt=key; continue;
@@ -123,7 +123,12 @@ function parseBlock(lines,index,defaultSubject){
   };
 }
 
-function toLetter(value){const v=String(value).toUpperCase();return ({1:'A',2:'B',3:'C',4:'D'})[v]||v;}
+function optionLetter(value){
+  const raw=String(value||'').trim();
+  const upper=raw.toUpperCase();
+  return ({'ఎ':'A','బి':'B','సి':'C','డి':'D'})[raw]||upper;
+}
+function toLetter(value){const v=String(value).toUpperCase();return ({1:'A',2:'B',3:'C',4:'D','ఎ':'A','బి':'B','సి':'C','డి':'D'})[v]||v;}
 function stripMarks(text){return String(text||'').replace(MARKS_GLOBAL,'').replace(/\s+\*\s*$/,'').trim();}
 function isQuestionStructure(line){return ROMAN_RE.test(line)||LIST_HEADER_RE.test(line)||/^పై\s/.test(line)||/^(?:A|B)\s*[\.:]\s+/.test(line);}
 function formatQuestionLine(line){
