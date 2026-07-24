@@ -1,9 +1,9 @@
-const MARKS = /[●⚫✅✓✔•]/g;
+const MARKS = /[●⚫✅✓✔]/g;
 const ROMAN_RE = /^(I|II|III|IV|V|VI|VII|VIII|IX|X)\s*[\.:]/i;
 const SMALL_ROMAN_RE = /^(i|ii|iii|iv|v|vi|vii|viii|ix|x)\s*[\.:]/;
 const PRAKATANA_RE = /^(ప్రకటన\s*\d+|Statement\s*\d+)\s*[:\.:]/i;
 const LIST_RE = /^(జాబితా\s*-?\s*[12I]+|List\s*-?\s*[12I]+)\s*[:\.:]/i;
-const OPTION_RE = /^([●⚫✅✓✔•]\s*)?([A-D])\s*[\)\.:\-]\s*(.*)$/i;
+const OPTION_RE = /^([A-D])\s*[\)\.:\-]\s*(.*)$/i;
 const QUESTION_START_RE = /^[\u200B\s]*(\d{1,4})\s*[\.)]\s*(.+)?$/;
 
 export function parseQuestions(raw, defaultSubject='General'){
@@ -24,7 +24,7 @@ function normalizeRaw(raw){
     .replace(/\r/g,'')
     .replace(/[\u200B\u200C\u200D\uFEFF]/g,'')
     .replace(/(\d{1,4})\s*[\.)]\s*/g, '\n$1. ')
-    .replace(/\s+([●⚫✅✓✔•]?\s*[A-D])\s*[\)\.:]\s*/g, '\n$1) ')
+    .replace(/\s+([A-D])\s*[\)\.:]\s*/g, '\n$1) ')
     .replace(/\s+(జాబితా\s*-?\s*[12I]+\s*[:\.:])/g, '\n$1 ')
     .replace(/\s+(ప్రకటన\s*\d+\s*[:\.:])/g, '\n$1 ')
     .replace(/\s+((?:I|II|III|IV|V|VI|VII|VIII|IX|X)\s*[\.:])/g, '\n$1 ')
@@ -47,9 +47,8 @@ function parseBlock(lines, idx, defaultSubject){
     if(ansLine){ ans=ansLine[2].toUpperCase(); continue; }
     let m=line.match(OPTION_RE);
     if(m){
-      const prefixMarked = Boolean(m[1]);
-      currentOpt=m[2].toUpperCase(); let txt=m[3].trim(); resetMarkRegex();
-      if(prefixMarked || hasMark(txt)){ ans=currentOpt; txt=stripMarks(txt); }
+      currentOpt=m[1].toUpperCase(); let txt=m[2].trim(); resetMarkRegex();
+      if(hasMark(txt)){ ans=currentOpt; txt=stripMarks(txt); }
       opts[currentOpt]=txt; continue;
     }
     if(currentOpt && !isQuestionMetaLine(line) && !QUESTION_START_RE.test(line)){
