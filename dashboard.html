@@ -1,1 +1,78 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Admin</title><link rel="stylesheet" href="style.css"></head><body><div class="hero"><h1>KSR DSC Enterprise Admin</h1><p>Version 1.0 Stable • DSC Exam Engine</p><div class="nav"><a class="btn gray" href="index.html">Student</a><a class="btn orange" href="questions.html">Question Editor</a><a class="btn green" href="students.html">Student Master</a><button class="gray" id="logout">Logout</button></div></div><div class="wrap"><div id="msg"></div><div class="card"><h2>Dashboard</h2><div class="grid"><div class="stat"><b id="adminEmail">-</b><p>Logged in admin</p></div><div class="stat"><b id="instCount">0</b><p>Institutes</p></div><div class="stat"><b id="examCount">0</b><p>Exams</p></div></div></div><div class="card"><h2>Create Institute</h2><label>Institute Code</label><input id="icode" value="KSR"><label>Institute Name</label><input id="iname" value="KSR Institute"><label>Contact optional</label><input id="contact"><button id="saveInst">Save Institute</button></div><div class="card"><h2>Create Exam</h2><label>Institute Code</label><input id="ecode" value="KSR"><label>Exam Title</label><input id="etitle" value="DSC Grand Test - 1"><label>Exam Code</label><div class="examCodeRow"><input id="examCode" placeholder="KSR-001"><button type="button" class="gray" id="generateCode">Generate</button></div><p class="small">Institute code + running number. Example: KSR-001</p><label>Start Date & Time</label><input type="datetime-local" id="start"><label>End Date & Time</label><input type="datetime-local" id="end"><div class="grid two"><div><label>Total Exam Time (Minutes)</label><input type="number" id="totalMinutes" value="30" min="1"></div><div><label>Allow Previous</label><select id="allowPrevious"><option value="yes">Yes</option><option value="no">No</option></select></div><div><label>Shuffle Questions within Subject</label><select id="shuffleQuestions"><option value="yes">Yes</option><option value="no">No</option></select></div><div><label>Shuffle Options</label><select id="shuffleOptions"><option value="no">No</option><option value="yes">Yes</option></select></div><div><label>Status</label><select id="status"><option value="draft">Draft</option><option value="active">Active</option><option value="closed">Closed</option></select></div></div><p class="msg warn">Exam time automatic ga calculate avvadu. Admin ikkada manual ga total minutes set cheyyali.</p><button class="green" id="saveExam">Save Exam</button></div><div class="card"><h2>Institutes</h2><div id="institutes"></div></div><div class="card"><h2>Exams</h2><div id="exams"></div></div></div><script type="module">import{auth,db,onAuthStateChanged,signOut,collection,getDocs,addDoc,serverTimestamp,$,show,esc}from'./app.js';let user=null;onAuthStateChanged(auth,u=>{if(!u)location.href='login.html';else{user=u;$('adminEmail').textContent=u.email;load();}});$('logout').onclick=()=>signOut(auth);$('ecode').addEventListener('input',()=>{if(!$('examCode').dataset.edited)$('examCode').value=''});$('examCode').addEventListener('input',()=>{$('examCode').dataset.edited='1';$('examCode').value=$('examCode').value.toUpperCase().replace(/\s+/g,'')});$('generateCode').onclick=async()=>{$('examCode').dataset.edited='';$('examCode').value=await nextExamCode($('ecode').value.trim().toUpperCase());};$('saveInst').onclick=async()=>{try{await addDoc(collection(db,'institutes'),{code:$('icode').value.trim().toUpperCase(),name:$('iname').value.trim(),contact:$('contact').value.trim(),createdBy:user.email,createdAt:serverTimestamp()});show('Institute saved ✅');load();}catch(e){show(e.message,'err')}};$('saveExam').onclick=async()=>{try{const instituteCode=$('ecode').value.trim().toUpperCase();if(!instituteCode)return show('Institute code enter cheyyandi','err');let examCode=$('examCode').value.trim().toUpperCase();if(!examCode)examCode=await nextExamCode(instituteCode);const all=await getDocs(collection(db,'exams'));let duplicate=false;all.forEach(d=>{if((d.data().examCode||'').toUpperCase()===examCode)duplicate=true});if(duplicate)return show('Ee Exam Code already undi. Generate new code.','err');const instituteName=await getInstituteName(instituteCode);const totalMinutes=Math.max(1,Number($('totalMinutes').value||30));await addDoc(collection(db,'exams'),{instituteCode,instituteName,title:$('etitle').value.trim(),examCode,start:$('start').value,end:$('end').value,status:$('status').value,questionCount:0,timeMode:'total',totalMinutes,allowPrevious:$('allowPrevious').value==='yes',shuffleQuestions:$('shuffleQuestions').value==='yes',shuffleOptions:$('shuffleOptions').value==='yes',createdBy:user.email,createdAt:serverTimestamp()});show('Exam saved ✅ Code: '+examCode);$('examCode').value='';$('examCode').dataset.edited='';load();}catch(e){show(e.message,'err')}};async function getInstituteName(code){let snap=await getDocs(collection(db,'institutes')),name=code;snap.forEach(d=>{let x=d.data();if((x.code||'').toUpperCase()===code)name=x.name||code});return name}async function nextExamCode(code){code=(code||'KSR').toUpperCase().replace(/[^A-Z0-9]/g,'')||'KSR';let snap=await getDocs(collection(db,'exams')),max=0;const re=new RegExp('^'+code+'-(\\d+)$','i');snap.forEach(d=>{let m=String(d.data().examCode||'').match(re);if(m)max=Math.max(max,Number(m[1]))});return code+'-'+String(max+1).padStart(3,'0')}async function load(){let is=await getDocs(collection(db,'institutes'));$('instCount').textContent=is.size;$('institutes').innerHTML='';is.forEach(d=>{let x=d.data();$('institutes').innerHTML+=`<div class=qcard><b>${esc(x.name)}</b><p>Code: ${esc(x.code)}</p></div>`});let es=await getDocs(collection(db,'exams'));$('examCount').textContent=es.size;$('exams').innerHTML='';es.forEach(d=>{let x=d.data(),ec=x.examCode||'(old exam - code not set)';$('exams').innerHTML+=`<div class=qcard><b>${esc(x.title)}</b><p>Institute: ${esc(x.instituteName||x.instituteCode)} • Status: <span class=pill>${esc(x.status)}</span></p><p><b>Exam Code:</b> ${esc(ec)}</p><p>Total Time: ${x.totalMinutes||30} minutes</p><p class=small>ID: ${d.id}</p><div class="examActions"><a class="btn orange" href="questions.html?exam=${d.id}">Add/Edit Questions</a><a class="btn green" href="index.html">Student Login Preview</a></div></div>`});if(!$('examCode').value){nextExamCode($('ecode').value.trim().toUpperCase()).then(v=>$('examCode').value=v)}}</script></body></html>
+<!doctype html><html lang="te"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSR Daily Test Admin</title><link rel="stylesheet" href="style.css">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#064a86">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="KSR EXAMOS">
+<link rel="apple-touch-icon" href="./icon-192.png">
+</head><body class="adminHubBody">
+<div class="adminTopbar"><div><h1>KSR Daily Tests</h1><p>Admin Control Centre</p></div><div class="adminTopActions"><a class="btn gray" href="index.html">Student Login</a><button class="gray" id="logout">Logout</button></div></div>
+<div class="wrap"><div id="msg"></div>
+
+<section id="adminHome" class="adminHomePanel">
+  <div class="adminWelcome"><h2>Main Features</h2><p>Meeku kavalsina option ni press cheyyandi.</p></div>
+  <div class="featureGrid">
+    <button class="featureCard featureBlue" data-open="examPanel"><span>📝</span><b>Create Exam</b><small>Questions paste, preview, save & codes</small></button>
+    <button class="featureCard featureGold" data-open="codesPanel"><span>🔐</span><b>Generated Codes</b><small>Copy, PDF and WhatsApp share</small></button>
+    <button class="featureCard featureGreen" data-open="resultsPanel"><span>🏆</span><b>Results & Ranks</b><small>Ranks, summary and PDF</small></button>
+    <button class="featureCard featurePurple" data-open="savedPanel"><span>🔎</span><b>Search Exams</b><small>Search or load all saved exams</small></button>
+    <a class="featureCard featureOrange" href="master-data.html"><span>👨‍🎓</span><b>Students & Contacts</b><small>Institute → Batch → Students hierarchy</small></a>
+    <a class="featureCard featureRed" href="live-monitor.html"><span>📡</span><b>Live Monitor</b><small>Batch-wise exam status</small></a>
+    <a class="featureCard featureBlue" href="question-bank.html"><span>📚</span><b>Question Bank</b><small>Subject, class and lesson folders</small></a>
+  </div>
+</section>
+
+<section id="examPanel" class="adminWorkPanel" hidden>
+<button class="backHomeBtn" type="button">← Main Features</button>
+<div class="card"><div class="sectionHeadRow"><div><h2>Create Daily Exam</h2><p class="small">Fresh exam form. Old exam data automatic ga load avvadu.</p></div><div class="action-row compact"><button type="button" class="gray" id="recoverDraftBtn">Recover Draft</button><button type="button" class="danger" id="clearExamFormBtn">Clear Form</button></div></div><div class="grid two">
+<div><label>Institute</label><select id="instituteId"></select><input id="instituteName" type="hidden"></div>
+<div><label>Batch</label><select id="batchId"></select></div>
+<div><label>Exam ID</label><input id="examId" placeholder="TEST-101"></div>
+<div><label>Exam Name (optional)</label><input id="examTitle" placeholder="Daily Grand Test"></div>
+<div><label>Active Students</label><input id="activeStudentCount" type="number" value="0" readonly></div>
+<div><label>Extra Backup Codes</label><input id="backupCodeCount" type="number" min="0" max="100" value="10"></div>
+<div><label>Total Codes</label><input id="codeCount" type="number" min="1" max="1000" value="10" readonly></div>
+<div><label>Start Time</label><input id="startTime" type="datetime-local"></div>
+<div><label>End Time</label><input id="endTime" type="datetime-local"></div>
+<div><label>Login Before Time</label><input id="loginBefore" type="datetime-local"></div>
+<div><label>Seconds for Each Question</label><input id="secondsPerQuestion" type="number" min="5" max="600" value="60"></div>
+<div><label>Status</label><select id="status"><option value="active">Active</option><option value="draft">Draft</option><option value="closed">Closed</option></select></div>
+<div><label>Question Bank Subject</label><input id="qbSubject" placeholder="Psychology / Maths / Telugu" value="General"></div>
+<div><label>Class / Exam Category</label><input id="qbClass" placeholder="Class 8 / DSC / TET" value="General"></div>
+<div><label>Lesson / Topic</label><input id="qbLesson" placeholder="Lesson 1 / Learning" value="General"></div>
+</div>
+<label>Paste Bits</label><textarea id="rawBits" class="bits-box" placeholder="1. Question text\nA) Option 1\nB) Option 2 ●\nC) Option 3\nD) Option 4"></textarea>
+<div class="action-row"><button id="parseBtn">Parse Questions</button><button class="gray" id="addQuestionBtn">+ Add Question</button><button class="gray" id="openBankBtn">📚 Add from Bank</button><button class="gray" id="saveToBankBtn">💾 Save to Bank</button><button class="orange" id="previewBtn">Student Exam Preview</button><button class="green" id="saveGenerateBtn">Save + Generate Codes</button></div>
+<div id="bankPicker" class="card bankPicker" hidden><div class="qhead"><h3>Add from Question Bank</h3><button type="button" class="gray" id="closeBankBtn">Close</button></div><div class="grid three"><input id="bankSubjectFilter" placeholder="Subject"><input id="bankClassFilter" placeholder="Class / Category"><input id="bankLessonFilter" placeholder="Lesson / Topic"></div><div class="action-row"><button type="button" id="loadBankBtn">Load Questions</button><button type="button" class="green" id="addSelectedBankBtn">Add Selected to Exam</button></div><div id="bankPickerList"><p class="small">Filters enter chesi Load Questions nokkandi.</p></div></div>
+<div id="health" class="health-box"></div><div id="questionEditor"></div></div>
+<div class="card" id="previewCard" hidden><h2>Student Exam Preview</h2><p class="small">ఇది preview మాత్రమే. Result save కాదు.</p><div class="preview-exam"><div class="preview-head"><b id="previewTitle">Exam Preview</b><span id="previewTimer">00:00</span></div><div id="previewContent"></div><div id="previewNav" class="palette"></div></div></div>
+</section>
+
+<section id="codesPanel" class="adminWorkPanel" hidden>
+<button class="backHomeBtn" type="button">← Main Features</button>
+<div class="card"><h2>Generated Codes</h2><div class="action-row"><button id="copyCodes" class="gray">Copy All Codes</button><button id="printCodes" class="orange">Download / Print PDF</button><button id="shareWhatsapp" class="green">Share WhatsApp</button></div><div id="codesBox"><p class="small">Exam save చేసిన తర్వాత codes ఇక్కడ కనిపిస్తాయి.</p></div></div>
+</section>
+
+<section id="resultsPanel" class="adminWorkPanel" hidden>
+<button class="backHomeBtn" type="button">← Main Features</button>
+<div class="card"><h2>Results & Ranks</h2><div class="grid two"><div><label>Exam ID</label><input id="resultExamId" placeholder="TEST-101"></div><div class="result-buttons"><button id="loadResults">Load Results</button><button id="printResults" class="orange">Download / Print PDF</button></div></div><div id="resultsBox"></div></div>
+</section>
+
+<section id="savedPanel" class="adminWorkPanel" hidden>
+<button class="backHomeBtn" type="button">← Main Features</button>
+<div class="card"><h2>Saved Exams</h2><div class="examViewTabs"><button type="button" class="active examViewBtn" data-view="active">Active Exams</button><button type="button" class="gray examViewBtn" data-view="archived">Archive</button><button type="button" class="danger examViewBtn" data-view="deleted">Recycle Bin</button></div><div class="exam-search-row"><input id="examSearch" placeholder="Search by Exam ID / Exam Name / Institute"><button id="searchExam">Search Exam</button><button id="loadAllExams" class="gray">Load All Exams</button></div><div id="savedExams"><p class="small">Search exam or press Load All Exams.</p></div></div>
+</section>
+</div>
+<script>
+(function(){
+ const home=document.getElementById('adminHome');
+ const panels=[...document.querySelectorAll('.adminWorkPanel')];
+ function openPanel(id){home.hidden=true;panels.forEach(p=>p.hidden=p.id!==id);if(id==='examPanel')window.dispatchEvent(new CustomEvent('ksr:new-exam'));window.scrollTo({top:0,behavior:'smooth'});}
+ document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>openPanel(b.dataset.open)));
+ document.querySelectorAll('.backHomeBtn').forEach(b=>b.addEventListener('click',()=>{panels.forEach(p=>p.hidden=true);home.hidden=false;window.scrollTo({top:0,behavior:'smooth'});}));
+})();
+</script>
+<script type="module" src="admin-daily.js?v=20260714-v24"></script>
+<script src="./pwa-register.js?v=20260715-1"></script>
+</body></html>

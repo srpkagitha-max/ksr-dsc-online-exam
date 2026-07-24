@@ -1,0 +1,16 @@
+KSR EXAMOS v2.7 - Telugu Options Parser Update
+
+Added parser support for Telugu option labels:
+ఎ) -> A
+బి) -> B
+సి) -> C
+డి) -> D
+
+Existing supported formats remain unchanged:
+A) B) C) D)
+(A) (B) (C) (D)
+a) b) c) d)
+1) 2) 3) 4)
+Correct markers: ● ⚫ * ✅ ✓ ✔ ★
+
+Student Login safe fix, 6-digit codes, answer-sheet fixes and existing 100+ question parser logic are retained.
